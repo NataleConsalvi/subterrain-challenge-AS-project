@@ -64,6 +64,9 @@
         name="depth_camera_to_body"      args="0 0 0 0 0 0 /true_body /depth_camera" />
         
    	<!-- static tf required for point clouds generation -->
+   	 <node pkg="tf2_ros" type="static_transform_publisher"
+        name="depth_camera_frame_to_body"      args="0 0 0 -1.570796 0 -1.570796 /true_body /Quadrotor/Sensors/DepthCamera" />
+</launch>
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="depth_camera_frame_to_body"      args="0 0 0 -1.570796 0 -1.570796 /true_body /Quadrotor/Sensors/DepthCamera" />
 </launch>
