@@ -1,0 +1,27 @@
+<launch>
+	
+	<!-- Perception launch file, NC -->
+	<!-- 	aim: transform the raw image from depth camera into a point cloud 			-->
+	<!-- 	used package: depth_image_proc/point:cloud_xyz 					-->
+	<!-- 	note:											-->
+	<!--	- no rectification of the image and no use of RGB cameras 				-->
+	<!--	- no coordinate transformation in this file, present in the simulation.launch file	-->
+
+  <arg name="depth_camera_info"              default="/realsense/depth/camera_info"/>
+  <arg name="depth_image_raw"                default="/realsense/depth/image"/>
+  <arg name="point_cloud"                    default="perception/depth_camera/point_cloud"/>
+
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet" name="depth_camera_to_pointcloud"
+        args="load depth_image_proc/point_cloud_xyz nodelet_manager">
+        
+    <!-- subscribe -->
+    <remap from="camera_info" to="$(arg depth_camera_info)"/>
+    <remap from="image_rect"  to="$(arg depth_image_raw)"/>
+    
+    <!-- publish -->
+    <remap from="points"      to="$(arg point_cloud)"/>
+  </node>
+
+</launch>
