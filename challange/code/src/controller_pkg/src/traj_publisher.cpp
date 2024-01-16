@@ -4,19 +4,33 @@
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <sstream>
 #include <iostream>
+#include <nav_msgs/Odometry.h>
 
 #include <math.h>
 
 #define STATIC_POSE 0
 
+#define STRAIGHT_POSE 1
+
 #define PI M_PI
 
 #define TFOUTPUT 1
+
+tf::Vector3 current_state;
+
+void currentStateCallback (const nav_msgs::Odometry& cur_state){
+
+        current_state.setX(cur_state.pose.pose.position.x);
+    current_state.setY(cur_state.pose.pose.position.y);
+    current_state.setZ(cur_state.pose.pose.position.z);
+
+}
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
     ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state", 1);
+    ros::Subscriber current_state_est = n.subscribe("current_state", 1, currentStateCallback);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 
@@ -40,38 +54,44 @@ int main(int argc, char **argv)
         acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
         acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
 
-#if STATIC_POSE
-        // Static Pose
-//        tf::Vector3 displacement(0,0,2);
-//        desired_pose.setOrigin(origin+displacement);
-//        tf::Quaternion q;
-//        q.setRPY(0,0,PI/4);
-//        count++;
-//        std::cout<<"Desired Orientation" << count << std::endl;
-//        desired_pose.setRotation(q);
 
-#else
-        // Circle
-        double R = 3.0;
-        double timeScale = 5.0;
-        desired_pose.setOrigin(
-                        origin + tf::Vector3(R*sin(t/timeScale), R*cos(t/timeScale), 2.0)
-                     );
-        tf::Quaternion q;
-        q.setRPY(0,0,-t/timeScale);
-        desired_pose.setRotation(q);
-        velocity.linear.x = R*cos(t/timeScale)/timeScale;
-        velocity.linear.y = -R*sin(t/timeScale)/timeScale;
-        velocity.linear.z = 0;
+        double takeoff_duration = 30.0;
+        double takeoff_instant = 20.0;
+        double transition_duration = 5.0;
 
-        velocity.angular.x = 0.0;
-        velocity.angular.y = 0.0;
-        velocity.angular.z = -1.0/timeScale;
+ROS_INFO("Time: %f", t);
+         if (t < takeoff_instant) {
+ ROS_INFO("Phase: Takeoff Instant");
+                tf::Vector3 target_pose (0.0,0.0,0.0);
+                desired_pose.setOrigin(origin + target_pose);
+                desired_pose.setOrigin(lerp(origin, origin + target_pose, t / takeoff_instant));
 
-        acceleration.linear.x = -R*sin(t/timeScale)/timeScale/timeScale;
-        acceleration.linear.y = -R*cos(t/timeScale)/timeScale/timeScale;
-        acceleration.linear.z = 0;
-#endif
+        }
+
+
+        if (t < takeoff_duration && t >= takeoff_instant) {
+ROS_INFO("Phase: Takeoff Duration");
+                tf::Vector3 target_pose (0.0,0.0,10.0);
+                 double normalized_time = (t - takeoff_instant) / (takeoff_duration - takeoff_instant);
+               desired_pose.setOrigin(lerp(origin, origin + target_pose, normalized_time));
+
+        }
+
+
+
+        if (t > takeoff_duration) {
+ROS_INFO("Phase: After Takeoff Duration");
+                tf::Vector3 target_pose (+50,20, 0.0);
+                desired_pose.setOrigin(origin + target_pose);
+                double distance = (target_pose - current_state).length();
+                double normalized_time = (t - takeoff_duration)/10;
+                desired_pose.setOrigin(lerp(origin, origin + target_pose, normalized_time));
+                ROS_INFO("Current Position: x = %f, y = %f, z = %f", current_state.x(), current_state.y(), current_state.z());
+
+
+        }
+
+        
 
         // Publish
         trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
