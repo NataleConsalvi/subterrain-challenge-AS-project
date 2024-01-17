@@ -26,6 +26,9 @@ find_package(catkin REQUIRED COMPONENTS
         message_generation
         mav_msgs
 	)
+	
+find_package(octomap REQUIRED)
+include_directories(${OCTOMAP_INCLUDE_DIRS})
 
 catkin_package(CATKIN_DEPENDS
         mav_msgs
@@ -46,13 +49,14 @@ link_directories(${CATKIN_DEVEL_PREFIX}/lib)
 include_directories(${CATKIN_DEVEL_PREFIX}/include)
 include_directories(${catkin_INCLUDE_DIRS} tcpimage)
 
+
 add_subdirectory(tcpimage)
 
 add_executable(unity_ros src/unity_ros.cpp)
 add_executable(state_estimate_corruptor_node src/state_estimate_corruptor_node.cpp )
 add_executable(w_to_unity src/w_to_unity.cpp)
 
-target_link_libraries(unity_ros ${catkin_LIBRARIES} tcpstreamreader tcpimage)
+target_link_libraries(unity_ros ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} tcpstreamreader tcpimage)
 target_link_libraries(state_estimate_corruptor_node  ${catkin_LIBRARIES})
 target_link_libraries(w_to_unity ${catkin_LIBRARIES} socket++ -pthread)
 
