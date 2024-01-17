@@ -1,0 +1,7 @@
+<launch>
+    <!-- Load parameters from YAML file -->
+    <rosparam file="$(find controller_pkg)/config/controller_params.yaml" command="load"/>
+
+    <!-- Launch controller_node -->
+    <node name="controller_node" pkg="controller_pkg" type="controller_node" output="screen"/>
+</launch>

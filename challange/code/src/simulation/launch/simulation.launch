@@ -40,7 +40,7 @@
 
   <node name="w_to_unity" pkg="simulation" type="w_to_unity"/>
   
-  <node name="controller_node" pkg="controller_pkg" type="controller_node"/>
+  <include file="$(find controller_pkg)/launch/controller.launch"/>
   
 
 
