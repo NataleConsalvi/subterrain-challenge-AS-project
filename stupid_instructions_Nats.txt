@@ -18,3 +18,7 @@ another terminal, code folder: 	source devel/setup.bash
 
 
 another terminal, code folder: 	rqt_graph (used to study what's happening)
+
+sudo apt-get install ros-noetic-octomap
+sudo apt-get install ros-noetic-octomap-server
+
