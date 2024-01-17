@@ -17,12 +17,16 @@
 #define TFOUTPUT 1
 
 tf::Vector3 current_state;
+double current_yaw;
+
+
 
 void currentStateCallback (const nav_msgs::Odometry& cur_state){
 
         current_state.setX(cur_state.pose.pose.position.x);
     current_state.setY(cur_state.pose.pose.position.y);
     current_state.setZ(cur_state.pose.pose.position.z);
+    current_yaw = tf::getYaw(cur_state.pose.pose.orientation);
 
 }
 int main(int argc, char **argv)
@@ -30,7 +34,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
     ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state", 1);
-    ros::Subscriber current_state_est = n.subscribe("current_state", 1, currentStateCallback);
+    ros::Subscriber current_state_est = n.subscribe("current_state_est", 1, currentStateCallback);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 
@@ -40,7 +44,11 @@ int main(int argc, char **argv)
 
     int count = 0;
     while (ros::ok()) {
-        tf::Vector3 origin(-38,10,6.5);
+
+        /*double Xstart = current_state.x();
+        double Ystart = current_state.y();
+        double Zstart = current_state.z();*/
+        tf::Vector3 origin(-38.0,10.0,6.9);
 
         double t = (ros::Time::now()-start).toSec();
 
@@ -55,41 +63,92 @@ int main(int argc, char **argv)
         acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
 
 
-        double takeoff_duration = 30.0;
-        double takeoff_instant = 20.0;
-        double transition_duration = 5.0;
+        //double tTakeoff = 15.0;
+        double tHoverEnd = 10;
+        double tTakeoffStart = 5.0;
+        double rotation_duration = 3;
+
+        
 
 ROS_INFO("Time: %f", t);
-         if (t < takeoff_instant) {
- ROS_INFO("Phase: Takeoff Instant");
-                tf::Vector3 target_pose (0.0,0.0,0.0);
-                desired_pose.setOrigin(origin + target_pose);
-                desired_pose.setOrigin(lerp(origin, origin + target_pose, t / takeoff_instant));
+         
+ //tf:: Vector3 temp_pose;
 
-        }
+ #if STATIC_POSE
+        // Static Pose
+        tf::Vector3 displacement(0,0,2);
+        desired_pose.setOrigin(origin+displacement);
+        tf::Quaternion q;
+        q.setRPY(0,0,PI/4);
+        count++;
+        std::cout<<"Desired Orientation" << count << std::endl;
+        desired_pose.setRotation(q);
 
+        #endif
+tf::Vector3 target_pose1 (0.0,0.0,8.1);
+tf::Vector3 target_pose2 (-283,0, 0);
 
-        if (t < takeoff_duration && t >= takeoff_instant) {
-ROS_INFO("Phase: Takeoff Duration");
-                tf::Vector3 target_pose (0.0,0.0,10.0);
-                 double normalized_time = (t - takeoff_instant) / (takeoff_duration - takeoff_instant);
-               desired_pose.setOrigin(lerp(origin, origin + target_pose, normalized_time));
+if (t >= tTakeoffStart && t < tHoverEnd ) {
+ ROS_INFO("Phase: Takeoff ");
+ ROS_INFO("Current Position: x = %f, y = %f, z = %f, Yaw = %f ", current_state.x(), current_state.y(), current_state.z(),current_yaw);
+                
+        tf::Quaternion q;
+        q.setRPY(0,0,0);
+        desired_pose.setRotation(q);
+        desired_pose.setOrigin(origin + target_pose1);
+}
 
-        }
+if (t >=  tHoverEnd && t <= tHoverEnd + rotation_duration){
 
+ ROS_INFO("Phase: Rotation ");
+ ROS_INFO("Current Position: x = %f, y = %f, z = %f, Yaw = %f ", current_state.x(), current_state.y(), current_state.z(),current_yaw);
 
+        double  x1 = origin.getX();
+        double  y1 = origin.getY();
+        double  x2 = target_pose2.getX();
+        double y2 = target_pose2.getY();
+       
 
-        if (t > takeoff_duration) {
-ROS_INFO("Phase: After Takeoff Duration");
-                tf::Vector3 target_pose (+50,20, 0.0);
-                desired_pose.setOrigin(origin + target_pose);
-                double distance = (target_pose - current_state).length();
-                double normalized_time = (t - takeoff_duration)/10;
-                desired_pose.setOrigin(lerp(origin, origin + target_pose, normalized_time));
-                ROS_INFO("Current Position: x = %f, y = %f, z = %f", current_state.x(), current_state.y(), current_state.z());
+        desired_pose.setOrigin(origin + target_pose1);
 
+        double Yawd = std::atan2(y2 - y1, x2 - x1) ;
+        tf::Quaternion qy;
+        qy.setRPY(0,0,Yawd);
+        desired_pose.setRotation(qy);
+}
+        
 
-        }
+if (t > tHoverEnd + rotation_duration) {
+ ROS_INFO("Phase: After Takeoff Duration");
+ 
+                
+        double  x1 = origin.getX();
+        double  y1 = origin.getY();
+        double  x2 = target_pose2.getX();
+        double y2 = target_pose2.getY();
+         double Yawd = std::atan2(y2 - y1, x2 - x1);
+        tf::Quaternion qy;
+        qy.setRPY(0,0,Yawd);
+        double distance = (origin + target_pose1 + target_pose2 - current_state).length();
+ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.x(), current_state.y(), current_state.z(), distance);
+                
+                if (distance > 1){
+
+                desired_pose.setRotation(qy);
+                
+               
+                double normalized_time = (t - tHoverEnd + rotation_duration)/100;
+                desired_pose.setOrigin(lerp(origin + target_pose1, target_pose1 + target_pose2, normalized_time));
+                
+                
+                
+                }
+                        else {
+                        desired_pose.setOrigin(target_pose1 + target_pose2);
+                        }
+                 
+} 
+
 
         
 
@@ -113,7 +172,8 @@ ROS_INFO("Phase: After Takeoff Duration");
         ss << "Trajectory Position"
            << " x:" << desired_pose.getOrigin().x()
            << " y:" << desired_pose.getOrigin().y()
-           << " z:" << desired_pose.getOrigin().z();
+           << " z:" << desired_pose.getOrigin().z()
+           << "Yawd:" <<tf::getYaw(desired_pose.getRotation());
         ROS_INFO("%s", ss.str().c_str());
 
 #if TFOUTPUT
