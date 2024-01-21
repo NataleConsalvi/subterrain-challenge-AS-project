@@ -40,7 +40,7 @@
 
   <node name="w_to_unity" pkg="simulation" type="w_to_unity"/>
   
-  <node name="controller_node" pkg="controller_pkg" type="controller_node"/>
+  <include file="$(find controller_pkg)/launch/controller.launch"/>
   
 
 
@@ -87,3 +87,8 @@
         name="sim_left_camera_sensor"      args="0 0 0 0 0 0 /Quadrotor/RGBCameraLeft /Quadrotor/Sensors/RGBCameraLeft" /> -->
 
 </launch>
+
+
+
+
+ 

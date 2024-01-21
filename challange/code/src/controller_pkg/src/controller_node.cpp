@@ -156,6 +156,11 @@ public:
       kv = 5.8;
       kr = 8.8;
       komega = 1.15;
+      
+      nh.getParam(ros::this_node::getName() + "/kx", kx);
+      nh.getParam(ros::this_node::getName() + "/kv", kv);
+      nh.getParam(ros::this_node::getName() + "/kr", kr);
+      nh.getParam(ros::this_node::getName() + "/komega", komega);
 //      kx = 10;
 //      kv = 5;
 //      kr = 11;
