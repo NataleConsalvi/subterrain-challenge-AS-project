@@ -23,7 +23,7 @@ double current_yaw;
 
 void currentStateCallback (const nav_msgs::Odometry& cur_state){
 
-        current_state.setX(cur_state.pose.pose.position.x);
+    current_state.setX(cur_state.pose.pose.position.x);
     current_state.setY(cur_state.pose.pose.position.y);
     current_state.setZ(cur_state.pose.pose.position.z);
     current_yaw = tf::getYaw(cur_state.pose.pose.orientation);
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 #if TFOUTPUT
     tf::TransformBroadcaster br;
 #endif
-
+bool GoalReachedFlag = 1;
     int count = 0;
     while (ros::ok()) {
 
@@ -85,8 +85,8 @@ ROS_INFO("Time: %f", t);
         desired_pose.setRotation(q);
 
         #endif
-tf::Vector3 target_pose1 (0.0,0.0,8.1);
-tf::Vector3 target_pose2 (-283,0, 0);
+tf::Vector3 target_pose1 (0.0,0.0,14);
+tf::Vector3 target_pose2 (-356,0, 0);
 
 if (t >= tTakeoffStart && t < tHoverEnd ) {
  ROS_INFO("Phase: Takeoff ");
@@ -118,7 +118,7 @@ if (t >=  tHoverEnd && t <= tHoverEnd + rotation_duration){
 }
         
 
-if (t > tHoverEnd + rotation_duration) {
+if (t > tHoverEnd + rotation_duration && GoalReachedFlag) {
  ROS_INFO("Phase: After Takeoff Duration");
  
                 
@@ -132,7 +132,7 @@ if (t > tHoverEnd + rotation_duration) {
         double distance = (origin + target_pose1 + target_pose2 - current_state).length();
 ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.x(), current_state.y(), current_state.z(), distance);
                 
-                if (distance > 1){
+                if (distance > 1 && GoalReachedFlag) {
 
                 desired_pose.setRotation(qy);
                 
@@ -143,13 +143,27 @@ ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.
                 
                 
                 }
-                        else {
-                        desired_pose.setOrigin(target_pose1 + target_pose2);
-                        }
-                 
+                       else {
+    // Set GoalReachedFlag to 0 only once when entering the else block
+    if (GoalReachedFlag) {
+        
+        GoalReachedFlag = 0;
+        
+        
+    desired_pose.setOrigin(tf::Vector3(current_state.x(), current_state.y(), current_state.z()));
+    tf::Quaternion q;
+    q.setRPY(0, 0, 0);
+    desired_pose.setRotation(q);
+        
+        
+    }
+    ROS_INFO("Goal reached. Hovering in place.");
+    desired_pose.setOrigin(origin + target_pose1 + target_pose2);
+}
 } 
 
-
+ROS_INFO("EXIT IF");
+                
         
 
         // Publish
