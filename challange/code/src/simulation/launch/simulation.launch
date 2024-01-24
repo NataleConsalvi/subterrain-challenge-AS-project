@@ -70,10 +70,15 @@
 
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="sim_left_camera_sensor"      args="0 0 0 -1.570796 0 -1.570796 /Quadrotor/RGBCameraLeft /Quadrotor/Sensors/RGBCameraLeft" />
-
-
+  
+  <!-- static tf required for point clouds generation -->
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="sim_right_camera_sensor"      args="0 0 0 -1.570796 0 -1.570796 /Quadrotor/RGBCameraRight /Quadrotor/Sensors/RGBCameraRight" />
+
+  <!-- static tf required for octomap -->
+  <node pkg="tf2_ros" type="static_transform_publisher"
+        name="world_to_map"      args="0 0 0 0 0 0 /world /map" /> 
+        
 
 
   <!-- create the needed /Quadrotor/Sensors frames without flipping -->

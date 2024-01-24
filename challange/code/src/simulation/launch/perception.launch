@@ -10,7 +10,7 @@
   <arg name="depth_camera_info"              default="/realsense/depth/camera_info"/>
   <arg name="depth_image_raw"                default="/realsense/depth/image"/>
   <arg name="depth_image_rectified"          default="/realsense/depth/image_rectified"/>
-  <arg name="point_cloud"                    default="/perception/depth_camera/point_cloud"/>
+  <arg name="point_cloud_2"                    default="/perception/depth_camera/point_cloud_2"/>
 
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
   
@@ -33,7 +33,7 @@
     <remap from="image_rect"  to="$(arg depth_image_rectified)"/>
     
     <!-- publish -->
-    <remap from="points"      to="$(arg point_cloud)"/>
+    <remap from="points"      to="$(arg point_cloud_2)"/>
   </node>
 
 </launch>

@@ -1,0 +1,17 @@
+# These parameters set thresholds on obstacle information put into the costmap.
+# The "obstacle_range" parameter determines the maximum range sensor reading that will result in an obstacle being put into the costmap.
+# Here, it is set to 5.0 meters, which means that the robot will only update its map with information about obstacles that are within 5 meters of the base.
+obstacle_range: 5.0
+
+# The "raytrace_range" parameter determines the range to which we will raytrace freespace given a sensor reading.
+# Setting it to 5.5 meters as we have above means that the robot will attempt to clear out space in front of it up to 5.5 meters away given a sensor reading.
+raytrace_range: 5.5
+
+# The inflation radius should be set to the maximum distance from obstacles at which a cost should be incurred.
+inflation_radius: 0.3
+
+transform_tolerance: 0.3
+
+observation_sources: depth_camera_sensor
+
+depth_camera_sensor: {sensor_frame: Quadrotor/Sensors/DepthCamera, data_type: PointCloud2, topic: perception/depth_camera/point_cloud_2, marking: true, clearing: true}
