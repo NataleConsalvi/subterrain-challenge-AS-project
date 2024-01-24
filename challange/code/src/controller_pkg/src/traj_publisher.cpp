@@ -4,191 +4,129 @@
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <sstream>
 #include <iostream>
-#include <nav_msgs/Odometry.h>
-
-#include <math.h>
-
-#define STATIC_POSE 0
-
-#define STRAIGHT_POSE 1
-
-#define PI M_PI
-
-#define TFOUTPUT 1
-
-tf::Vector3 current_state;
-double current_yaw;
+#include <tf/LinearMath/Quaternion.h>
 
 
 
-void currentStateCallback (const nav_msgs::Odometry& cur_state){
-
-    current_state.setX(cur_state.pose.pose.position.x);
-    current_state.setY(cur_state.pose.pose.position.y);
-    current_state.setZ(cur_state.pose.pose.position.z);
-    current_yaw = tf::getYaw(cur_state.pose.pose.orientation);
-
-}
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
     ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state", 1);
-    ros::Subscriber current_state_est = n.subscribe("current_state_est", 1, currentStateCallback);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 
 #if TFOUTPUT
     tf::TransformBroadcaster br;
 #endif
-bool GoalReachedFlag = 1;
-    int count = 0;
-    while (ros::ok()) {
 
-        /*double Xstart = current_state.x();
-        double Ystart = current_state.y();
-        double Zstart = current_state.z();*/
-        tf::Vector3 origin(-38.0,10.0,6.9);
-
-        double t = (ros::Time::now()-start).toSec();
-
-        // Quantities to fill in
-        tf::Transform desired_pose(tf::Transform::getIdentity());
-
-        geometry_msgs::Twist velocity;
-        velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
-        velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
-        geometry_msgs::Twist acceleration;
-        acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
-        acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
-
-
-        //double tTakeoff = 15.0;
-        double tHoverEnd = 10;
-        double tTakeoffStart = 5.0;
-        double rotation_duration = 3;
-
+    int count = 0;    
+    tf::Transform desired_pose(tf::Transform::getIdentity());
+    geometry_msgs::Twist velocity;
+    geometry_msgs::Twist acceleration;
         
+        
+   
+ while (ros::ok())
+    {
+    
+    tf::Vector3 origin(-38.0, 10.0, 6.9); // Starting location of the drone
+    
+    double t = (ros::Time::now() - start).toSec();
 
-ROS_INFO("Time: %f", t);
-         
- //tf:: Vector3 temp_pose;
-
- #if STATIC_POSE
-        // Static Pose
-        tf::Vector3 displacement(0,0,2);
-        desired_pose.setOrigin(origin+displacement);
-        tf::Quaternion q;
-        q.setRPY(0,0,PI/4);
-        count++;
-        std::cout<<"Desired Orientation" << count << std::endl;
-        desired_pose.setRotation(q);
-
-        #endif
-tf::Vector3 target_pose1 (0.0,0.0,14);
-tf::Vector3 target_pose2 (-356,0, 0);
-
-if (t >= tTakeoffStart && t < tHoverEnd ) {
- ROS_INFO("Phase: Takeoff ");
- ROS_INFO("Current Position: x = %f, y = %f, z = %f, Yaw = %f ", current_state.x(), current_state.y(), current_state.z(),current_yaw);
-                
-        tf::Quaternion q;
-        q.setRPY(0,0,0);
-        desired_pose.setRotation(q);
-        desired_pose.setOrigin(origin + target_pose1);
-}
-
-if (t >=  tHoverEnd && t <= tHoverEnd + rotation_duration){
-
- ROS_INFO("Phase: Rotation ");
- ROS_INFO("Current Position: x = %f, y = %f, z = %f, Yaw = %f ", current_state.x(), current_state.y(), current_state.z(),current_yaw);
-
-        double  x1 = origin.getX();
-        double  y1 = origin.getY();
-        double  x2 = target_pose2.getX();
-        double y2 = target_pose2.getY();
+     
+    velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
+    velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
        
+    acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
+    acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
 
-        desired_pose.setOrigin(origin + target_pose1);
 
-        double Yawd = std::atan2(y2 - y1, x2 - x1) ;
-        tf::Quaternion qy;
-        qy.setRPY(0,0,Yawd);
-        desired_pose.setRotation(qy);
-}
+    double takeoff_duration = 5;                  
+    double target_height = 15;                     
+    double cruise_duration = 40;
         
+    tf::Vector3 target_position(-321.0, 10.0, 15); 
+    tf::Vector3 finaltakeoff(-38.0, 10.0, 15);
+        
+    double takeoff_heading_angle = atan2(target_position.y() - origin.y(), target_position.x() - origin.x());
 
-if (t > tHoverEnd + rotation_duration && GoalReachedFlag) {
- ROS_INFO("Phase: After Takeoff Duration");
- 
-                
-        double  x1 = origin.getX();
-        double  y1 = origin.getY();
-        double  x2 = target_pose2.getX();
-        double y2 = target_pose2.getY();
-         double Yawd = std::atan2(y2 - y1, x2 - x1);
-        tf::Quaternion qy;
-        qy.setRPY(0,0,Yawd);
-        double distance = (origin + target_pose1 + target_pose2 - current_state).length();
-ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.x(), current_state.y(), current_state.z(), distance);
-                
-                if (distance > 1 && GoalReachedFlag) {
 
-                desired_pose.setRotation(qy);
-                
-               
-                double normalized_time = (t - tHoverEnd + rotation_duration)/100;
-                desired_pose.setOrigin(lerp(origin + target_pose1, target_pose1 + target_pose2, normalized_time));
-                
-                
-                
-                }
-                       else {
-    // Set GoalReachedFlag to 0 only once when entering the else block
-    if (GoalReachedFlag) {
-        
-        GoalReachedFlag = 0;
-        
-        
-    desired_pose.setOrigin(tf::Vector3(current_state.x(), current_state.y(), current_state.z()));
-    tf::Quaternion q;
-    q.setRPY(0, 0, 0);
-    desired_pose.setRotation(q);
-        
-        
+
+
+ if (t < takeoff_duration) 
+    {
+      
+    ROS_INFO("Phase: take off and rotation");
+      
+    tf::Quaternion takeoff_rotation;
+    takeoff_rotation.setRPY(0, 0, takeoff_heading_angle * (t / takeoff_duration));
+           
+    desired_pose.setOrigin(tf::Vector3(origin.x(), origin.y(), origin.z() + t / takeoff_duration * (target_height - origin.z())));
+    desired_pose.setRotation(takeoff_rotation);
+            
     }
-    ROS_INFO("Goal reached. Hovering in place.");
-    desired_pose.setOrigin(origin + target_pose1 + target_pose2);
+
+ 
+         
+         
+ if (t >= takeoff_duration && t <= takeoff_duration + cruise_duration) 
+   {
+   ROS_INFO("Phase: Cruise");
+   
+    // Calculate linear velocity for the cruise phase (from distance and time)
+    double cruise_linear_speed = 7.5;  
+    tf::Vector3 linear_velocity(cruise_linear_speed, 0.0, 0.0);  // Moving along the x-axis
+
+    // Set desired linear velocity
+    velocity.linear.x = linear_velocity.getX();
+    velocity.linear.y = linear_velocity.getY();
+    velocity.linear.z = linear_velocity.getZ();
+
+    // Set desired acceleration to zero
+    acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0.0;
+
+
+    // Interpolate the current position towards the target position
+    double progress = (t - takeoff_duration) / cruise_duration;
+    desired_pose.setOrigin(tf::lerp(finaltakeoff, target_position, progress));
+
+    // Set orientation 
+    tf::Quaternion cruise_orientation;
+    cruise_orientation.setRPY(0, 0, 0);  // Adjust roll, pitch, and yaw as needed
+    desired_pose.setRotation(cruise_orientation);
 }
-} 
+ 
+ 
+ 
+ 
 
-ROS_INFO("EXIT IF");
-                
+
+      // Publish
+    trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
+    msg.transforms.resize(1);
+    msg.transforms[0].translation.x = desired_pose.getOrigin().x();
+    msg.transforms[0].translation.y = desired_pose.getOrigin().y();
+    msg.transforms[0].translation.z = desired_pose.getOrigin().z();
+    msg.transforms[0].rotation.x = desired_pose.getRotation().getX();
+    msg.transforms[0].rotation.y = desired_pose.getRotation().getY();
+    msg.transforms[0].rotation.z = desired_pose.getRotation().getZ();
+    msg.transforms[0].rotation.w = desired_pose.getRotation().getW();
         
+    msg.velocities.resize(1);
+    msg.velocities[0] = velocity;
+    msg.accelerations.resize(1);
+    msg.accelerations[0] = acceleration;
+    desired_state_pub.publish(msg);
 
-        // Publish
-        trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
-        msg.transforms.resize(1);
-        msg.transforms[0].translation.x = desired_pose.getOrigin().x();
-        msg.transforms[0].translation.y = desired_pose.getOrigin().y();
-        msg.transforms[0].translation.z = desired_pose.getOrigin().z();
-        msg.transforms[0].rotation.x = desired_pose.getRotation().getX();
-        msg.transforms[0].rotation.y = desired_pose.getRotation().getY();
-        msg.transforms[0].rotation.z = desired_pose.getRotation().getZ();
-        msg.transforms[0].rotation.w = desired_pose.getRotation().getW();
-        msg.velocities.resize(1);
-        msg.velocities[0] = velocity;
-        msg.accelerations.resize(1);
-        msg.accelerations[0] = acceleration;
-        desired_state_pub.publish(msg);
 
-        std::stringstream ss;
-        ss << "Trajectory Position"
-           << " x:" << desired_pose.getOrigin().x()
-           << " y:" << desired_pose.getOrigin().y()
-           << " z:" << desired_pose.getOrigin().z()
-           << "Yawd:" <<tf::getYaw(desired_pose.getRotation());
+    std::stringstream ss;
+    ss << "Trajectory Position"
+       << " x:" << desired_pose.getOrigin().x()
+       << " y:" << desired_pose.getOrigin().y()
+       << " z:" << desired_pose.getOrigin().z();
         ROS_INFO("%s", ss.str().c_str());
+
 
 #if TFOUTPUT
         br.sendTransform(tf::StampedTransform(desired_pose, ros::Time::now(),
@@ -199,8 +137,9 @@ ROS_INFO("EXIT IF");
 
         loop_rate.sleep();
         ++count;
-    }
+    
+}
 
-
+    ros::shutdown(); 
     return 0;
 }
