@@ -85,8 +85,8 @@ ROS_INFO("Time: %f", t);
         desired_pose.setRotation(q);
 
         #endif
-tf::Vector3 target_pose1 (0.0,0.0,8.1);
-tf::Vector3 target_pose2 (-283,0, 0);
+tf::Vector3 target_pose1 (0.0,0.0,14.1);
+tf::Vector3 target_pose2 (-308.0,+1.0, 0);
 
 if (t >= tTakeoffStart && t < tHoverEnd ) {
  ROS_INFO("Phase: Takeoff ");

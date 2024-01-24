@@ -1,25 +1,28 @@
 	<!-- Mapping launch file, NC, Claudia -->
 <launch>
-
-	<arg name="point_cloud"                    default="/perception/depth_camera/point_cloud"/>
+	
+	<!--
+		resolution: Sets the OctoMap resolution in meters (dim voxel grid);
+		max_range: Defines the maximum detection range for the sensor in meters;
+		latch: Controls whether the node latches and publishes the last available message to new subscribers (false-> increase the velocity);
+		projected_map: output topic for the projected map;
+		point_cloud_2: input topic for the PointCloud2;				
+	-->
+	<arg name="resolution_octomap"	default="0.4"/>
+	<arg name="max_range_octomap"		default="15.0"/>
+	<arg name="latch_octomap"		default="false"/>
+	<arg name="point_cloud_2"		default="/perception/depth_camera/point_cloud_2"/>
 	
 	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
-		<param name="resolution" value="0.5" />
+		<param name="resolution" 				value="$(arg resolution_octomap)" />
+		<param name="frame_id" 		type="string" 	value="map" />
+		<param name="sensor_model/max_range" 			value="$(arg max_range_octomap)" />
+    		<param name = "height_map" 				value = "true" />
+    		<param name = "latch" 					value = "$(arg latch_octomap)" /> 
 		
-		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
-		<param name="frame_id" type="string" value="world" />
-		
-		<!-- maximum range to integrate (speedup!) -->
-		<param name="sensor_model/max_range" value="10.0" />
-		
-		<param name="pointcloud_min_z" value="0.3" />
-		
-    		<param name = "height_map" value = "true" />
-    		
-    		<param name = "latch" value = "false" /> 
-		
-		<!-- data source to integrate (PointCloud2) -->
-		<remap from="cloud_in" to="$(arg point_cloud)" />
+		<!-- data source to integrate, output topic for projected map -->
+		<remap from="cloud_in" to="$(arg point_cloud_2)" />
+		<remap from="projected_map" to="map" />
 	
 	</node>
 </launch>
