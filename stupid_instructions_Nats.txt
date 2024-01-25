@@ -1,0 +1,24 @@
+This instruction must be performed when building the project for the first time; it will be addressed in the final deliverable version.
+
+code folder: catkin build
+
+		extract from Simulation zip all the files into the folder challenge/code/devel/lib/simulation
+		properties of Simulation.x86_64,  Permissions -> check "Allow executing file as program"
+		do the same for UnityPlayer.so
+		
+code folder: 	catkin build
+		source devel/setup.bash
+		
+		roslaunch simulation simulation.launch
+		
+another terminal, code folder: 	source devel/setup.bash
+					rosrun controller_pkg traj_publisher
+					
+.--.
+
+
+another terminal, code folder: 	rqt_graph (used to study what's happening)
+
+sudo apt-get install ros-noetic-octomap
+sudo apt-get install ros-noetic-octomap-server
+

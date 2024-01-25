@@ -1,0 +1,11 @@
+# File: controller_params.yaml
+
+kx: 9.5
+kv: 5.4
+kr: 8.6
+komega: 1.8
+
+#      kx = 12.7;
+#      kv = 5.8;
+#      kr = 8.8;
+#     komega = 1.15;

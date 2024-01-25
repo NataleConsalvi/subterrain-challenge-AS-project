@@ -1,0 +1,39 @@
+<launch>
+	
+	<!-- Perception launch file, NC, Claudia -->
+	<!-- 	aim: transform the raw image from depth camera into a point cloud 			-->
+	<!-- 	used package: depth_image_proc/point:cloud_xyz 					-->
+	<!-- 	note:											-->
+	<!--	- yes rectification of the image and no use of RGB cameras 				-->
+	<!--	- no coordinate transformation in this file, present in the simulation.launch file	-->
+
+  <arg name="depth_camera_info"              default="/realsense/depth/camera_info"/>
+  <arg name="depth_image_raw"                default="/realsense/depth/image"/>
+  <arg name="depth_image_rectified"          default="/realsense/depth/image_rectified"/>
+  <arg name="point_cloud"                    default="/perception/depth_camera/point_cloud"/>
+
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
+  
+  <node pkg="nodelet" type="nodelet" name="depth_camera_raw_to_rectified"
+        args="load image_proc/rectify nodelet_manager">
+        
+    <!-- subscribe -->
+    <remap from="image_mono" to="$(arg depth_image_raw)"/>
+    <remap from="camera_info" to="$(arg depth_camera_info)"/>
+
+    <!-- publish -->
+    <remap from="image_rect" to="$(arg depth_image_rectified)"/> <!-- New remapping for rectified image -->
+  </node>
+
+  <node pkg="nodelet" type="nodelet" name="depth_camera_to_pointcloud"
+        args="load depth_image_proc/point_cloud_xyz nodelet_manager">
+        
+    <!-- subscribe -->
+    <remap from="camera_info" to="$(arg depth_camera_info)"/>
+    <remap from="image_rect"  to="$(arg depth_image_rectified)"/>
+    
+    <!-- publish -->
+    <remap from="points"      to="$(arg point_cloud)"/>
+  </node>
+
+</launch>
