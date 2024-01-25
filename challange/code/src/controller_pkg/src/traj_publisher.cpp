@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 #if TFOUTPUT
     tf::TransformBroadcaster br;
 #endif
-
+bool GoalReachedFlag = 1;
     int count = 0;
     while (ros::ok()) {
 
@@ -85,8 +85,8 @@ ROS_INFO("Time: %f", t);
         desired_pose.setRotation(q);
 
         #endif
-tf::Vector3 target_pose1 (0.0,0.0,8.1);
-tf::Vector3 target_pose2 (-283,0, 0);
+tf::Vector3 target_pose1 (0.0,0.0,11.1);
+tf::Vector3 target_pose2 (-67,1.5, 0);
 
 if (t >= tTakeoffStart && t < tHoverEnd ) {
  ROS_INFO("Phase: Takeoff ");
@@ -132,7 +132,7 @@ if (t > tHoverEnd + rotation_duration) {
         double distance = (origin + target_pose1 + target_pose2 - current_state).length();
 ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.x(), current_state.y(), current_state.z(), distance);
                 
-                if (distance > 1){
+                if (distance > 5  && GoalReachedFlag){
 
                 desired_pose.setRotation(qy);
                 
@@ -144,6 +144,7 @@ ROS_INFO("Current Position: x = %f, y = %f, z = %f, distance %f", current_state.
                 
                 }
                         else {
+                                GoalReachedFlag = 0;
                         desired_pose.setOrigin(target_pose1 + target_pose2);
                         }
                  
