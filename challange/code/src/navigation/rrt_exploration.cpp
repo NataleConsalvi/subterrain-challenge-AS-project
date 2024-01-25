@@ -259,19 +259,7 @@ void octomapCallback(const octomap_msgs::Octomap::ConstPtr &msg)
         return 1;
     }
 
-    //------------------------------------------------------------------------------
-
-    void printRRT(RRT &rrt)
-    {
-
-        Node *node = rrt.start;
-        std::cout << node->posX << " : " << node->posY << std::endl;
-        node = rrt.goal;
-        std::cout << node->posX << " : " << node->posY << std::endl;
-    }
-
-
-//------------------------------------------------------------------------------
+  
 
 int main()
 {

@@ -1,0 +1,13 @@
+Implemented a basic rrt algorithm which whould theoretically interact with OctoMap messages and drone current position. 
+The goal for this first attempt would be to just see if the algorithm actually generates the waypoints to get to the goal location (which for now is just another goal point in 3D space). 
+For now it surely does not work as I still did not run it, my guess is that, apart from the suurely present syntax and logic errors, the "checkObstacles" function is not entirely correct.
+
+What is missing/TODOs:
+
+-Adjusting values such as maximum number of iterations, maximum distance.
+
+-Implementing the actual cost function which needs to be 		evaluated by the rrt algorithm in order to choose which nodes of the tree to follow. My idea for the cost function would be to use a similar approach to the next best view point planning algorithm (https://github.com/ethz-asl/nbvplanner). This is what I think will be the most challenging bit.
+
+-After the path is chosen (so the waypoints are defined), I'd proceed by using the https://github.com/ethz-asl/mav_trajectory_generation package in a quite identical way in which the guys in the following repo did it in the following file: https://github.com/Dawnborn/ASChallenge/blob/master/catkin_ws/src/navigation/src/navigation.cc
+
+-Logic with which moving between rrt planning-->trajectory generation-->trajectory execution and repeat.
