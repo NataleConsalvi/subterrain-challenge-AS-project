@@ -1,0 +1,42 @@
+[submodule "challange/code/src/catkin_boost_python_buildtool"]
+	path = challange/code/src/catkin_boost_python_buildtool
+	url = git@github.com:ethz-asl/catkin_boost_python_buildtool.git
+[submodule "challange/code/src/catkin_simple"]
+	path = challange/code/src/catkin_simple
+	url = git@github.com:catkin/catkin_simple.git
+[submodule "challange/code/src/eigen_catkin"]
+	path = challange/code/src/eigen_catkin
+	url = git@github.com:ethz-asl/eigen_catkin.git
+[submodule "challange/code/src/eigen_checks"]
+	path = challange/code/src/eigen_checks
+	url = git@github.com:ethz-asl/eigen_checks.git
+[submodule "challange/code/src/gflags_catkin"]
+	path = challange/code/src/gflags_catkin
+	url = git@github.com:ethz-asl/gflags_catkin.git
+[submodule "challange/code/src/glog_catkin"]
+	path = challange/code/src/glog_catkin
+	url = git@github.com:ethz-asl/glog_catkin.git
+[submodule "challange/code/src/minkindr"]
+	path = challange/code/src/minkindr
+	url = git@github.com:ethz-asl/minkindr.git
+[submodule "challange/code/src/minkindr_ros"]
+	path = challange/code/src/minkindr_ros
+	url = git@github.com:ethz-asl/minkindr_ros.git
+[submodule "challange/code/src/protobuf_catkin"]
+	path = challange/code/src/protobuf_catkin
+	url = git@github.com:ethz-asl/protobuf_catkin.git
+[submodule "challange/code/src/numpy_eigen"]
+	path = challange/code/src/numpy_eigen
+	url = git@github.com:ethz-asl/numpy_eigen.git
+[submodule "challange/code/src/catkin_grpc"]
+	path = challange/code/src/catkin_grpc
+	url = git@github.com:CogRob/catkin_grpc.git
+[submodule "challange/code/src/mav_trajectory_generation"]
+	path = challange/code/src/mav_trajectory_generation
+	url = git@github.com:ethz-asl/mav_trajectory_generation.git
+[submodule "challange/code/src/voxblox"]
+	path = challange/code/src/voxblox
+	url = git@github.com:ethz-asl/voxblox.git
+[submodule "challange/code/src/nlopt"]
+	path = challange/code/src/nlopt
+	url = git@github.com:ethz-asl/nlopt.git
