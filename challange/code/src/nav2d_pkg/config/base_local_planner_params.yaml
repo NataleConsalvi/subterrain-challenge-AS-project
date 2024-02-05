@@ -1,0 +1,25 @@
+TrajectoryPlannerROS:
+  max_vel_x: 5.0                   # Maximum velocity along the x-axis (in m/s)
+  max_vel_y: 5.0                   # Maximum velocity along the y-axis (in m/s)
+  min_vel_x: 0.0                   # Minimum velocity along the x-axis (in m/s)
+  min_vel_y: 0.0                   # Minimum velocity along the y-axis (in m/s)
+  max_vel_theta: 1.0               # Maximum angular velocity (in rad/s)
+  min_vel_theta: -1.0              # Minimum angular velocity (in rad/s)
+  min_in_place_vel_theta: 2.5      # Minimum angular velocity for in-place rotations (in rad/s)
+
+  acc_lim_theta: 0.7               # Maximum angular acceleration (in rad/s^2)
+  acc_lim_x: 0.7                   # Maximum acceleration along the x-axis (in m/s^2)
+  acc_lim_y: 0.7                   # Maximum acceleration along the y-axis (in m/s^2)
+
+  holonomic_robot: true            # Whether the robot is considered holonomic or not
+
+  global_frame_id: body             # Global reference frame for planning
+  yaw_goal_tolerance: 0.2          # Tolerance on the desired final orientation (in rad)
+
+  heading_scoring: false           # Whether to consider orientation scoring in planning
+  meter_scoring: true              # Whether to consider distance scoring in planning
+
+  sim_time: 7.0                    # Maximum time for trajectory simulation (in seconds)
+  sim_granularity: 0.05            # Granularity of trajectory simulation (in meters)
+
+  path_distance_bias: 6            # Weight assigned to path distance in trajectory evaluation

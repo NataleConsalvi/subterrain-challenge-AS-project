@@ -50,7 +50,8 @@ int main(int argc, char **argv)
     tf::Vector3 finaltakeoff(-38.0, 10.0, 15);
         
 
-    double takeoff_heading_angle = atan2(target_position.y() - origin.y(), target_position.x() - origin.x()) + M_PI;
+    double takeoff_heading_angle = atan2(target_position.y() - origin.y(), target_position.x() - origin.x()) - M_PI;
+
 
 
 
