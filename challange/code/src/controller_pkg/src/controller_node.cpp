@@ -7,6 +7,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <mav_msgs/Actuators.h>
 #include <nav_msgs/Odometry.h>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <math.h>
 #include <std_msgs/Float64.h>
@@ -130,8 +131,8 @@ public:
       //
       // ~~~~ begin solution
       
-      desired_state = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
-      current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
+      desired_state = nh.subscribe("desired_state", 100, &controllerNode::onDesiredState, this);
+      current_state = nh.subscribe("current_state_est", 100, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);
 
@@ -179,7 +180,7 @@ public:
       J << 1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0;
   }
 
-  void onDesiredState(const trajectory_msgs::MultiDOFJointTrajectoryPoint& des_state){
+  void onDesiredState(const trajectory_msgs::MultiDOFJointTrajectory& des_trajectory){
 
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       //  PART 3 | Objective: fill in xd, vd, ad, yawd
@@ -192,6 +193,10 @@ public:
       // Hint: use "v << vx, vy, vz;" to fill in a vector with Eigen.
       //
       // ~~~~ begin solution
+
+      // Assuming that the trajectory has at least one point
+      const trajectory_msgs::MultiDOFJointTrajectoryPoint& des_state = des_trajectory.points[0];
+
       
       // Position
       geometry_msgs::Vector3 t = des_state.transforms[0].translation;

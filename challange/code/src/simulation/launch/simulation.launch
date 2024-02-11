@@ -52,7 +52,7 @@
         name="sim_rgb_camera"      args="0 -0.05 0 0 0 0 /camera /Quadrotor/RGBCameraLeft " />
 
   <node pkg="tf2_ros" type="static_transform_publisher"
-        name="sim_depth_camera"      args="0 0 0 0 0 0 /depth_camera /Quadrotor/DepthCamera" />
+        name="sim_depth_camera"      args="0 0 0 0 0 0 /depth_camera Quadrotor/Sensors/DepthCamera" />
 
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="sim_right_camera"      args="0 0.05 0 0 0 0 /camera /Quadrotor/RGBCameraRight" />
@@ -68,8 +68,7 @@
         name="world_to_map"      args="0 0 0 0 0 0 /world /map" /> 
         
    	<!-- static tf required for point clouds generation -->
-  <node pkg="tf2_ros" type="static_transform_publisher"
-        name="depth_camera_frame_to_body"      args="0 0 0 -1.570796 0 -1.570796 /true_body /Quadrotor/Sensors/DepthCamera" />
+
 </launch>
 
 

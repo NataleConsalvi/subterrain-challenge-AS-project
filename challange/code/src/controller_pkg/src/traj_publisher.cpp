@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <std_msgs/String.h>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <sstream>
 #include <iostream>
@@ -12,7 +13,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
-    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state", 1);
+    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectory>("desired_state", 1);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 
@@ -117,7 +118,14 @@ int main(int argc, char **argv)
     msg.velocities[0] = velocity;
     msg.accelerations.resize(1);
     msg.accelerations[0] = acceleration;
-    desired_state_pub.publish(msg);
+
+
+    // Create a trajectory message and add the point
+    trajectory_msgs::MultiDOFJointTrajectory trajectory_msg;
+    trajectory_msg.points.push_back(msg);
+
+    // Publish the trajectory message
+    desired_state_pub.publish(trajectory_msg);
 
 
     std::stringstream ss;
