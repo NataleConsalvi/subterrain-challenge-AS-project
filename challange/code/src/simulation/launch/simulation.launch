@@ -52,7 +52,7 @@
         name="sim_rgb_camera"      args="0 -0.05 0 0 0 0 /camera /Quadrotor/RGBCameraLeft " />
 
   <node pkg="tf2_ros" type="static_transform_publisher"
-        name="sim_depth_camera"      args="0 0 0 0 0 0 /depth_camera Quadrotor/Sensors/DepthCamera" />
+        name="sim_depth_camera"      args="0 0 0 -1.570796 0 -1.570796 /depth_camera /Quadrotor/Sensors/DepthCamera" />
 
   <node pkg="tf2_ros" type="static_transform_publisher"
         name="sim_right_camera"      args="0 0.05 0 0 0 0 /camera /Quadrotor/RGBCameraRight" />

@@ -1,14 +1,14 @@
 <launch>
 
   <!-- Voxblox arguments -->
-  <arg name="voxel_size" default="0.50"/>
-  <arg name="voxels_per_side" default="16"/>
-  <arg name="ray_length" default="50.0"/>
+  <arg name="voxel_size" default="0.30"/>
+  <arg name="voxels_per_side" default="2"/>
+  <arg name="ray_length" default="100.0"/>
   <arg name="method" default="merged"/>
   <arg name="verbose_voxblox" default="true"/>
 
   <!--  Planner arguments-->
-  <arg name="planner_config" default="planners/example_config.yaml"/>
+  <arg name="planner_config" default="planners/example_config_nats.yaml"/>
   
   <!--  Experiment arguments -->  
   <arg name="experiment_config" default="nats_exp_config.yaml"/>
@@ -24,13 +24,14 @@
     <node name="voxblox_node" pkg="voxblox_ros" type="esdf_server" output="screen" args="-alsologtostderr">
       <remap from="pointcloud" to="/perception/depth_camera/point_cloud_2"/>
       <param name="use_tf_transforms" value="true"/>
-      <param name="world_frame" value="map" />
+      <param name="world_frame" value="world" />
       <param name="sensor_frame" value="/Quadrotor/Sensors/DepthCamera" />
+      <param name="publish_tsdf_map" value="true" />
       <param name="publish_esdf_map" value="true" />
       <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
       <param name="tsdf_voxels_per_side" value="$(arg voxels_per_side)" />
       <param name="color_mode" value="color" />
-      <param name="update_mesh_every_n_sec" value="1.0" />
+      <param name="update_mesh_every_n_sec" value="0.5" />
       <param name="method" value="$(arg method)" />
       <param name="max_ray_length" value="$(arg ray_length)" />
       <param name="allow_clear" value="true" />
@@ -42,12 +43,13 @@
 		  <!-- Voxblox Server -->
       <remap from="planner_node/esdf_map_in" to="voxblox_node/esdf_map_out" />
       <remap from="planner_node/tsdf_map_in" to="voxblox_node/tsdf_map_out" />
-      <param name="use_tf_transforms" value="true" />
+      <param name="use_tf_transforms" value="false" />
       <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
       <param name="tsdf_voxels_per_side" value="$(arg voxels_per_side)" />
       <param name="update_mesh_every_n_sec" value="0.0" />   
       <param name="publish_traversable" value="false" />    
-      <param name="publish_pointclouds" value="false" />              
+      <param name="publish_pointclouds" value="false" /> 
+      <param name="world_frame" value="world" />             
     
     	<!-- General Settings -->
       <remap from="odometry" to="/current_state_est" />
