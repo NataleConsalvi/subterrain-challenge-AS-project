@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
     // Set orientation 
     tf::Quaternion cruise_orientation;
-    cruise_orientation.setRPY(0, 0, 0);  // Adjust roll, pitch, and yaw as needed
+    cruise_orientation.setRPY(0, 0, 180);  // Adjust roll, pitch, and yaw as needed
     desired_pose.setRotation(cruise_orientation);
 }
  
