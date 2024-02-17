@@ -24,12 +24,14 @@ class LightDetector(object):
         self.semantic_camera_info_subscriber = rospy.Subscriber("/unity_ros/Quadrotor/Sensors/SemanticCamera/camera_info", CameraInfo, self.camera_info_callback)
         self.point_cloud_subscriber = rospy.Subscriber("/perception/pcl/out_colored", PointCloud2, self.point_cloud_callback)
 
-        # self.rgb_camera_subscriber = rospy.Subscriber("/realsense/rgb/left/image_raw", Image, self.rgb_image_callback)
-        # self.rgb_img = None
+        self.rgb_camera_subscriber = rospy.Subscriber("/realsense/rgb/left/image_raw", Image, self.rgb_image_callback)
+        self.rgb_img = None
 
         self._image_pub = rospy.Publisher("/processed_image", Image, queue_size=10)
 
         self.overlayed_image_pub = rospy.Publisher("/overlayed_image", Image, queue_size=10)
+
+        self.object_pcl_pub = rospy.Publisher("/object_pcl", PointCloud2, queue_size=10)
 
         self.tf_buffer = tf2_ros.Buffer() 
         tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -38,10 +40,12 @@ class LightDetector(object):
         self.K = None
         self.P = None
 
+        self.mask = None
+
     def camera_info_callback(self, msg):
         rospy.loginfo('Camera Info received...')
         self.K = np.array(msg.K).reshape(3, 3)
-        self.P = np.array(msg.P).reshape(3, 3)
+        self.P = np.array(msg.P).reshape(4, 3)
 
     def find_unique_colors(self, image):
         # Convert the image to a list of pixels and find unique colors
@@ -73,9 +77,9 @@ class LightDetector(object):
             self.rgb_img = cv_image
             #self.find_unique_colors(cv_image)
 
-            if self.sem_img is not None:
-                dst = cv2.addWeighted(cv_image, 0.7, self.sem_img, 0.3, 0.0)
-                self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(dst, "bgr8"))
+            # if self.sem_img is not None:
+            #     dst = cv2.addWeighted(cv_image, 0.7, self.sem_img, 0.3, 0.0)
+            #     self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(dst, "bgr8"))
 
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
@@ -88,7 +92,7 @@ class LightDetector(object):
 
         # Find pixels within the bounds and create a mask
         mask = cv2.inRange(image, lower_bound, upper_bound)
-
+        self.mask = mask
         # Optionally, apply the mask to get the segmented object
         segmented_image = cv2.bitwise_and(image, image, mask=mask)
         # Find contours from the binary image
@@ -113,28 +117,47 @@ class LightDetector(object):
         try:
             frame_id = data.header.frame_id
 
-            transform = tf_buffer.lookup_transform('Quadrotor/Sensors/DepthCamera', frame_id, rospy.Time(), rospy.Duration(1.0))
+            ## Assume the semantic image and left rgb image are in the same frame so no need for transformation
+            # transform = tf_buffer.lookup_transform('/Quadrotor/Sensors/RGBCameraLeft', frame_id, rospy.Time(), rospy.Duration(1.0))
+            # cloud_transformed = tf2_ros.do_transform_cloud(data, transform)
 
-            cloud_transformed = tf2_ros.do_transform_cloud(data, transform)
-
+            # convert msg to numpy
             pcl_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data)
 
-            u = (self.K[0, 0] * pcl_array[:, 0] / pcl_array[:, 2]) + self.K[0, 2]
-            v = (self.K[1, 1] * pcl_array[:, 1] / pcl_array[:, 2]) + self.K[1, 2]
+            # calculate the pixel coords
+            u, v = self.calculate_pixel_coordinates(pcl_array)
 
+            for u_, v_ in zip(u,v):
+                image = cv2.circle(self.rgb_img, (int(u_),int(v_)), radius=0, color=(0, 0, 255), thickness=-1)
+            self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
+
+            if self.mask is not None:
+                # res_mask = np.zeros(pcl_array.shape[0])
+                u = np.array(u, dtype=int)
+                v = np.array(v, dtype=int)
+
+                res_mask = self.mask[v,u] > 0
+
+                object_pcl_arr = pcl_array[res_mask]
+
+                # Convert pcl_array to a structured array with named fields
+                structured_array = np.zeros((object_pcl_arr.shape[0],), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
+                structured_array['x'] = object_pcl_arr[:, 0]
+                structured_array['y'] = object_pcl_arr[:, 1]
+                structured_array['z'] = object_pcl_arr[:, 2]
+
+                object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
+
+                self.object_pcl_pub.publish(object_pcl_msg)
+                
         except tf2_ros.LookupException as e:
             rospy.logerr(e)
 
-    def calculate_3d_coordinates(u, v, depth, camera_intrinsics):
-        fx = camera_intrinsics['fx']
-        fy = camera_intrinsics['fy']
-        cx = camera_intrinsics['cx']
-        cy = camera_intrinsics['cy']
+    def calculate_pixel_coordinates(self, pcl):
+        u = (self.K[0, 0] * pcl[:, 0] / pcl[:, 2]) + self.K[0, 2]
+        v = (self.K[1, 1] * pcl[:, 1] / pcl[:, 2]) + self.K[1, 2]
+        return u, v
 
-        Z = depth
-        X = (u - cx) * Z / fx
-        Y = (v - cy) * Z / fy
-        return X, Y, Z
 
 if __name__ == '__main__':
     rospy.init_node("light_detector_node", anonymous=True)
