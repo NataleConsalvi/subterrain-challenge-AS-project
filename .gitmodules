@@ -40,3 +40,6 @@
 [submodule "challange/code/src/nlopt"]
 	path = challange/code/src/nlopt
 	url = git@github.com:ethz-asl/nlopt.git
+[submodule "challange/code/src/yaml_cpp_catkin"]
+	path = challange/code/src/yaml_cpp_catkin
+	url = git@github.com:ethz-asl/yaml_cpp_catkin.git
