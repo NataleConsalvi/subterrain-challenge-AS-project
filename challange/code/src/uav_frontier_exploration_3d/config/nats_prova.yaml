@@ -17,7 +17,7 @@ exploration:
   bbx_minY: -500.0
   bbx_maxY: 500.0
   bbx_minZ: -50.0
-  bbx_maxZ: 50.0
+  bbx_maxZ: 100.0
 
   # Length of one side of the cube inside which we calculate information gain
   box_length: 8.0
