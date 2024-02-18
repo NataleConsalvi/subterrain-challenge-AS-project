@@ -6,6 +6,7 @@
  */
 
 #include <uav_frontier_exploration_3d/FrontierServer.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 
 namespace frontier_server
 {
@@ -22,6 +23,9 @@ namespace frontier_server
 		m_logfile << "This is a log file for 3D-Frontier" << endl;
 
 		// Initialize publishers
+		
+		
+		m_trajectoryPointPub = m_nh.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state2",1, false);
 		m_bestFrontierPub = m_nh.advertise<
 			visualization_msgs::Marker>("best_frontier_marker", 1, false);
 		m_markerFrontierPub = m_nh.advertise<
@@ -51,6 +55,48 @@ namespace frontier_server
 			m_octree = NULL;
 		}	
 	}
+void FrontierServer::publishBestFrontierMio()
+{
+    m_logfile << "publishBestFrontierMio" << endl;
+	m_trajectoryPointPub = m_nh.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state2", 1, false);
+
+    
+    // Create a trajectory point message
+    trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
+    msg.transforms.resize(1);
+	 msg.transforms[0].translation.x = m_bestFrontierPoint.x();
+    msg.transforms[0].translation.y = m_bestFrontierPoint.y();
+    msg.transforms[0].translation.z = m_bestFrontierPoint.z();
+
+    msg.transforms[0].rotation.x = 0;
+     msg.transforms[0].rotation.y = 0;
+     msg.transforms[0].rotation.z = 0;
+     msg.transforms[0].rotation.w = 1;
+    // Set the position
+   /**geometry_msgs::Transform transform;
+    transform.translation.x = m_bestFrontierPoint.x();
+    transform.translation.y = m_bestFrontierPoint.y();
+    transform.translation.z = m_bestFrontierPoint.z();*/
+
+	 geometry_msgs::Twist velocity;
+    geometry_msgs::Twist acceleration;
+	velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
+    velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
+       
+    acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
+    acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
+	msg.velocities.resize(1);
+    msg.velocities[0] = velocity;
+    msg.accelerations.resize(1);
+    msg.accelerations[0] = acceleration;
+
+    
+    // Add the position to the trajectory point
+    //trajectoryPoint.transforms.push_back(transform);
+    
+    // Publish the trajectory point
+    m_trajectoryPointPub.publish(msg);
+}
 
 	bool FrontierServer::configureFromFile(string config_filename)
 	{
@@ -424,11 +470,32 @@ namespace frontier_server
 						m_bestFrontierPoint.x() << " " << m_bestFrontierPoint.y() << " " 
 						<< m_bestFrontierPoint.z() << " -> Goal published HELLO!");
 					// Update octomap
+					
 					m_octree = m_octomapServer.getOcTree();	
 					// Get changed cells
 					m_changedCells = m_octomapServer.getChangedCells();
 					if (m_changedCells.size() > 0)
 						setStateAndPublish(ExplorationState::ON);
+					   else {
+        // Update m_bestFrontierPoint here
+        point3d currentPoint3d(m_uavCurrentPose.position.x, 
+                               m_uavCurrentPose.position.y, 
+                               m_uavCurrentPose.position.z);
+        m_bestFrontierPoint = m_bestFrontierServer.bestFrontierInfGain(m_octree, 
+                                                                        currentPoint3d, 
+                                                                        m_clusteredCellsUpdated);
+        m_logfile << "Best frontier: " << m_bestFrontierPoint << endl;
+        
+        m_allUAVGoals.push_back(m_bestFrontierPoint);
+        cout << "Best frontier: " << m_bestFrontierPoint << endl;
+        
+        // Publish the best frontier point
+        publishBestFrontierMio();
+        
+        // Publish the UAV goal
+        publishUAVGoal(m_bestFrontierPoint);
+    }
+    
 					break;
 
 				case ExplorationState::ON:
