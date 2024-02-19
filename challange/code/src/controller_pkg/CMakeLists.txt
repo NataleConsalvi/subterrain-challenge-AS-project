@@ -42,3 +42,7 @@ target_link_libraries(controller_node ${catkin_LIBRARIES})
 add_executable(traj_publisher src/traj_publisher.cpp)
 add_dependencies(traj_publisher ${catkin_EXPORTED_TARGETS})
 target_link_libraries(traj_publisher ${catkin_LIBRARIES})
+
+add_executable(PointReachedNode src/PointReachedNode.cpp)
+add_dependencies(PointReachedNode ${catkin_EXPORTED_TARGETS})
+target_link_libraries(PointReachedNode ${catkin_LIBRARIES})
