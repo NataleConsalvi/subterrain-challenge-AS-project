@@ -130,7 +130,7 @@ public:
       //
       // ~~~~ begin solution
       //desired_state1 = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
-      desired_state2 = nh.subscribe("airsim_ros_node/desired_state2", 1, &controllerNode::onDesiredState, this);
+      desired_state2 = nh.subscribe("airsim_ros_node/exploration/goal", 1, &controllerNode::onDesiredState, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);
@@ -196,7 +196,8 @@ public:
       // Position
       geometry_msgs::Vector3 t = des_state.transforms[0].translation;
       xd << t.x, t.y, t.z;
-      // ROS_INFO_NAMED("onDesiredState", "POS: %f %f %f", t.x, t.y, t.z);
+      //ROS_INFO("Received Desired Position (xd): [%.3f, %.3f, %.3f]", xd(0), xd(1), xd(2));
+       //ROS_INFO_NAMED("onDesiredState", "POS: %f %f %f", t.x, t.y, t.z);
 
       // Velocities
       geometry_msgs::Vector3 v = des_state.velocities[0].linear;

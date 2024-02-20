@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
-    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("airsim_ros_node/desired_state2", 1);
+    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("airsim_ros_node/exploration/goal", 1);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
  if (t < takeoff_duration) 
     {
       
-    ROS_INFO("Phase: take off and rotation");
+    //ROS_INFO("Phase: take off and rotation");
       
     tf::Quaternion takeoff_rotation;
     takeoff_rotation.setRPY(0, 0, takeoff_heading_angle * (t / takeoff_duration));
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
          
  if (t >= takeoff_duration && t <= takeoff_duration + cruise_duration) 
    {
-   ROS_INFO("Phase: Cruise");
+   //ROS_INFO("Phase: Cruise");
    
     // Calculate linear velocity for the cruise phase (from distance and time)
     double cruise_linear_speed = 7.5;  
@@ -120,12 +120,12 @@ int main(int argc, char **argv)
     desired_state_pub.publish(msg);
 
 
-    std::stringstream ss;
+   /*std::stringstream ss;
     ss << "Trajectory Position"
        << " x:" << desired_pose.getOrigin().x()
        << " y:" << desired_pose.getOrigin().y()
        << " z:" << desired_pose.getOrigin().z();
-        ROS_INFO("%s", ss.str().c_str());
+        ROS_INFO("%s", ss.str().c_str());*/
 
 
 #if TFOUTPUT

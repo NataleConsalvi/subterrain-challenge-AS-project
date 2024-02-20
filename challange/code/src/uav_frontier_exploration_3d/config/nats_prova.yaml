@@ -12,15 +12,15 @@ exploration:
   # bounding box: necessary to limit the simulation 
   # scenario (smaller than actual gazebo scenario)
   # used for frontier detection
-  bbx_minX: -500.0
-  bbx_maxX: 500.0
-  bbx_minY: -500.0
-  bbx_maxY: 500.0
-  bbx_minZ: -50.0
-  bbx_maxZ: 100.0
+  bbx_minX: -600.0
+  bbx_maxX: -310.0
+  bbx_minY: -100.0
+  bbx_maxY: 100
+  bbx_minZ: 10.0
+  bbx_maxZ: 65.0
 
   # Length of one side of the cube inside which we calculate information gain
-  box_length: 8.0
+  box_length: 2.5
   # Gain to scale exp function in information gain
   k_gain: 100.0
   # Constant; small lambda means that motion is cheap and gives priority

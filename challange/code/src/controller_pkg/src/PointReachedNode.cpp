@@ -10,7 +10,7 @@
 class WaypointCheckerNode {
 public:
     WaypointCheckerNode() {
-        desirePositionSub = nh.subscribe("airsim_ros_node/desired_state2", 1, &WaypointCheckerNode::desirePositionCallback, this);
+        desirePositionSub = nh.subscribe("airsim_ros_node/exploration/goal", 1, &WaypointCheckerNode::desirePositionCallback, this);
         currentStateSub = nh.subscribe("current_state_est", 1, &WaypointCheckerNode::currentStateCallback, this);
         pointReachedPub = nh.advertise<std_msgs::Bool>("/airsim_ros_node/exploration/point_reached", 1);
     }
@@ -24,7 +24,7 @@ public:
 
     void currentStateCallback(const nav_msgs::Odometry& cur_state) {
         // Calculate the distance between the current position and the desired position
-        Eigen::Vector3d x;
+        
         x << cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z;
          Eigen::Vector3d diff= x-xd;
         double distance = diff.norm();
@@ -48,6 +48,7 @@ private:
     ros::Subscriber desirePositionSub;
     ros::Subscriber currentStateSub;
     ros::Publisher pointReachedPub;
+    Eigen::Vector3d x;
     Eigen::Vector3d xd;
     double thresholdDistance = 5; // Set your desired threshold here
 };
@@ -57,7 +58,12 @@ int main(int argc, char** argv) {
 
     WaypointCheckerNode node;
 
-    ros::spin();
+    ros::Rate rate(0.5);
+
+    while (ros::ok()){
+        ros::spinOnce();
+        rate.sleep();
+    }
 
     return 0;
 }
