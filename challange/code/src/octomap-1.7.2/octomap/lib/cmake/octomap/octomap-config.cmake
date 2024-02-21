@@ -23,12 +23,12 @@
 # ===================================================================================
 
  
-set(OCTOMAP_INCLUDE_DIRS "/home/nataleconsalvi/Desktop/prova_path/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/include")
-set(OCTOMAP_LIBRARY_DIRS "/home/nataleconsalvi/Desktop/prova_path/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib")
+set(OCTOMAP_INCLUDE_DIRS "/home/marcel/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/include")
+set(OCTOMAP_LIBRARY_DIRS "/home/marcel/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib")
  
 
 # Set library names
 set(OCTOMAP_LIBRARIES 
-  "/home/nataleconsalvi/Desktop/prova_path/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib/liboctomap.so"
-  "/home/nataleconsalvi/Desktop/prova_path/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib/liboctomath.so"
+  "/home/marcel/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib/liboctomap.so"
+  "/home/marcel/subterrain-challenge-AS-project/challange/code/src/octomap-1.7.2/octomap/lib/liboctomath.so"
 )

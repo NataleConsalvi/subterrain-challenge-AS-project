@@ -4,4 +4,7 @@
 
     <!-- Launch controller_node -->
     <node name="controller_node" pkg="controller_pkg" type="controller_node" output="screen"/>
+    
+    <!-- Launch traj_publisher -->
+    <node name="traj_publisher" pkg="controller_pkg" type="traj_publisher" output="screen"/>
 </launch>
