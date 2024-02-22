@@ -1,5 +1,5 @@
 <launch>
-  <arg name="rate" default="1"/>
+  <arg name="rate" default="0.5"/>
   <arg name="namespace" default="airsim_ros_node"/>
   <arg name="odometry" default="/current_state_est"/>
   <arg name="cloud_in" default="/perception/depth_camera/point_cloud_2"/>
