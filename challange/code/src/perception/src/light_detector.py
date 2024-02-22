@@ -1,11 +1,14 @@
  #!/usr/bin/env python
 import cv2
 import numpy as np
+import pcl
 import ros_numpy
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
 from sensor_msgs.msg import Image, CameraInfo, PointCloud2
+from vision_msgs.msg import Detection3DArray, Detection3D, BoundingBox3D
+from visualization_msgs.msg import MarkerArray, Marker
 from cv_bridge import CvBridge, CvBridgeError
 from image_geometry import PinholeCameraModel
 
@@ -27,11 +30,15 @@ class LightDetector(object):
         self.rgb_camera_subscriber = rospy.Subscriber("/realsense/rgb/left/image_raw", Image, self.rgb_image_callback)
         self.rgb_img = None
 
-        self._image_pub = rospy.Publisher("/processed_image", Image, queue_size=10)
+        self._image_pub = rospy.Publisher("/perception/processed_image", Image, queue_size=10)
 
-        self.overlayed_image_pub = rospy.Publisher("/overlayed_image", Image, queue_size=10)
+        self.overlayed_image_pub = rospy.Publisher("/perception/overlayed_image", Image, queue_size=10)
 
-        self.object_pcl_pub = rospy.Publisher("/object_pcl", PointCloud2, queue_size=10)
+        self.object_pcl_pub = rospy.Publisher("/perception/object_pcl", PointCloud2, queue_size=10)
+
+        self.object_bb_pub = rospy.Publisher("/perception/object_bb", Detection3DArray, queue_size=10)
+
+        self.object_marker_pub = rospy.Publisher("/perception/object_marker", MarkerArray, queue_size=10)
 
         self.tf_buffer = tf2_ros.Buffer() 
         tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -95,6 +102,7 @@ class LightDetector(object):
         self.mask = mask
         # Optionally, apply the mask to get the segmented object
         segmented_image = cv2.bitwise_and(image, image, mask=mask)
+
         # Find contours from the binary image
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -131,25 +139,40 @@ class LightDetector(object):
                 image = cv2.circle(self.rgb_img, (int(u_),int(v_)), radius=0, color=(0, 0, 255), thickness=-1)
             self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
 
+
             if self.mask is not None:
-                # res_mask = np.zeros(pcl_array.shape[0])
+  
                 u = np.array(u, dtype=int)
                 v = np.array(v, dtype=int)
 
-                res_mask = self.mask[v,u] > 0
+                res_mask = (self.mask[v,u] > 0) & (v > 0) & (u>0) 
+                valid_mask = [v>0, u>0]
 
                 object_pcl_arr = pcl_array[res_mask]
 
+                pcl_cloud = pcl.PointCloud(object_pcl_arr.astype(np.float32))
+                mean_k = 20
+                tresh = 0.1
+                filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud,mean_k,tresh)
+                filtered_np_cloud = np.asarray(filtered_pcl_cloud)
+
                 # Convert pcl_array to a structured array with named fields
-                structured_array = np.zeros((object_pcl_arr.shape[0],), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
-                structured_array['x'] = object_pcl_arr[:, 0]
-                structured_array['y'] = object_pcl_arr[:, 1]
-                structured_array['z'] = object_pcl_arr[:, 2]
+                structured_array = np.zeros((filtered_np_cloud.shape[0],), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
+                structured_array['x'] = filtered_np_cloud[:, 0]
+                structured_array['y'] = filtered_np_cloud[:, 1]
+                structured_array['z'] = filtered_np_cloud[:, 2]
 
                 object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
 
                 self.object_pcl_pub.publish(object_pcl_msg)
                 
+                bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
+                bb_array.header = data.header
+                self.object_bb_pub.publish(bb_array)
+
+                markers_array = self.create_marker_from_bb(bb_array)
+                self.object_marker_pub.publish(markers_array)
+
         except tf2_ros.LookupException as e:
             rospy.logerr(e)
 
@@ -157,6 +180,65 @@ class LightDetector(object):
         u = (self.K[0, 0] * pcl[:, 0] / pcl[:, 2]) + self.K[0, 2]
         v = (self.K[1, 1] * pcl[:, 1] / pcl[:, 2]) + self.K[1, 2]
         return u, v
+    
+    def do_statistical_outlier_filtering(self, pcl_data,mean_k,tresh):
+        '''
+        :param pcl_data: point could data subscriber
+        :param mean_k: number of neighboring points to analyze for any given point
+        :param tresh: Any point with a mean distance larger than global will be considered outlier
+        :return: Statistical outlier filtered point cloud data
+        eg) cloud = do_statistical_outlier_filtering(cloud,10,0.001)
+        : https://github.com/fouliex/RoboticPerception
+        '''
+        outlier_filter = pcl_data.make_statistical_outlier_filter()
+        outlier_filter.set_mean_k(mean_k)
+        outlier_filter.set_std_dev_mul_thresh(tresh)
+        return outlier_filter.filter()
+
+    def create_3d_bb_from_pcl(self, pcl):
+
+        x_extent = np.max(pcl[:,0]) - np.min(pcl[:,0])
+        y_extent = np.max(pcl[:,1]) - np.min(pcl[:,1])
+        z_extent = np.max(pcl[:,2]) - np.min(pcl[:,2])
+        
+        center_x = np.min(pcl[:,0]) + 0.5*x_extent
+        center_y = np.min(pcl[:,1]) + 0.5*y_extent
+        center_z = np.min(pcl[:,2]) + 0.5*z_extent
+
+        bb = BoundingBox3D()
+        bb.size.x = x_extent
+        bb.size.y = y_extent
+        bb.size.z = z_extent
+        bb.center.position.x = center_x
+        bb.center.position.y = center_y
+        bb.center.position.z = center_z
+        bb.center.orientation.w = 1
+  
+
+        detection = Detection3D()
+        detection.bbox = bb
+        
+        detections_arr = Detection3DArray()
+        detections_arr.detections.append(detection)
+
+        return detections_arr
+
+    def create_marker_from_bb(self, detections_arr):
+
+        markers_arr = MarkerArray()
+        for detection in detections_arr.detections:
+            marker = Marker()
+            marker.pose = detection.bbox.center
+            marker.scale = detection.bbox.size
+            marker.type = 1
+            marker.header = detections_arr.header
+            marker.color.a = 0.5
+
+
+            markers_arr.markers.append(marker)
+
+        return markers_arr
+
 
 
 if __name__ == '__main__':
