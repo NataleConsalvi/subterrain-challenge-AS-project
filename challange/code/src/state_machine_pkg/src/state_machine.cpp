@@ -56,7 +56,7 @@ public:
         ROS_INFO("State machine initialized.");
         mission_state = 2;
         init = false;
-        ROS_INFO("State defined to: PREDIFINED ROUTE");
+
         //launch_flag = false;
         autonomous_check = false;
         landing_check = false;
@@ -79,8 +79,11 @@ public:
 
     void state_machine_loop(const ros::TimerEvent& t){
         if (!init) {
-            ros::Duration(20.0).sleep();  // Sleep for 10 seconds
+            ros::Duration(10.0).sleep();  // Sleep for 10 seconds
             init = true;
+            mission_state_msgs.data = mission_state;
+            drone_state_pub.publish(mission_state_msgs);
+            ROS_INFO("State defined to: PREDIFINED ROUTE");
         }
         if(mission_state == 1){initial_state();}
         if(mission_state == 2){predefined_state();}

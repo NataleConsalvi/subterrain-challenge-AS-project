@@ -20,7 +20,7 @@ private:
 	ros::Publisher desired_state_pub;
 	
 	// Topics from state machine
-    ros::Subscriber recived_state;
+    ros::Subscriber received_state;
     int actual_state;   //Represents de actual state
 
     geometry_msgs::Twist velocity;
@@ -48,15 +48,17 @@ public:
         acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
         acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
 
-        recived_state  = n.subscribe("state_machine/state", 1, &TrajPublisher::State_callback, this);
+        received_state  = n.subscribe("/state", 1, &TrajPublisher::State_callback, this);
     }
 
 
     void State_callback(const std_msgs::Int64& state_msg)
     {
         int new_state = state_msg.data;
+        ROS_INFO("Enter State_callback function.");
         if(new_state != actual_state)
         { 
+            ROS_INFO("Enter state if function.");
             actual_state = new_state;
             tf::TransformBroadcaster br;
             switch(actual_state)
@@ -67,6 +69,7 @@ public:
 
                 case 2:
                 {
+                    ROS_INFO("Enter switch case 2 if function.");
                     bool reachedcave = false;
                     ros::Rate loop_rate(500);
                     tf::Vector3 origin(-38.0, 10.0, 6.9); // Starting location of the drone
@@ -186,8 +189,7 @@ public:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
-    TrajPublisher Traj_publisher();
-
+    TrajPublisher Traj_publisher;
     ros::spin(); 
     return 0;
 }

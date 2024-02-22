@@ -1,4 +1,4 @@
 <launch>
+        <node name="state_machine" pkg="state_machine_pkg" type="state_machine" output="screen"/>
         <include file="$(find simulation)/launch/simulation.launch"/>
-	<node name="state_machine" pkg="state_machine_pkg" type="state_machine" output="screen"/>
 </launch>
