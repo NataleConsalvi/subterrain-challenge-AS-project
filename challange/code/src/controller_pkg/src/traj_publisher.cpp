@@ -55,10 +55,8 @@ public:
     void State_callback(const std_msgs::Int64& state_msg)
     {
         int new_state = state_msg.data;
-        ROS_INFO("Enter State_callback function.");
         if(new_state != actual_state)
         { 
-            ROS_INFO("Enter state if function.");
             actual_state = new_state;
             tf::TransformBroadcaster br;
             switch(actual_state)
@@ -69,7 +67,6 @@ public:
 
                 case 2:
                 {
-                    ROS_INFO("Enter switch case 2 if function.");
                     bool reachedcave = false;
                     ros::Rate loop_rate(500);
                     tf::Vector3 origin(-38.0, 10.0, 6.9); // Starting location of the drone
@@ -89,7 +86,7 @@ public:
                         
                         if (t < takeoff_duration) 
                         {
-                            ROS_INFO("Phase: take off and rotation");
+                            //ROS_INFO("Phase: take off and rotation");
             
                             tf::Quaternion takeoff_rotation;
                             takeoff_rotation.setRPY(0, 0, takeoff_heading_angle * (t / takeoff_duration));
@@ -99,7 +96,7 @@ public:
                         }        
                         if (t >= takeoff_duration && t <= takeoff_duration + cruise_duration) 
                         {
-                            ROS_INFO("Phase: Cruise");
+                            //ROS_INFO("Phase: Cruise");
                         
                             // Calculate linear velocity for the cruise phase (from distance and time)
                             double cruise_linear_speed = 7.5;  
@@ -173,12 +170,12 @@ public:
 
         desired_state_pub.publish(msg);
 
-        std::stringstream ss;
-        ss << "Trajectory Position"
-        << " x:" << desired_pose.getOrigin().x()
-        << " y:" << desired_pose.getOrigin().y()
-        << " z:" << desired_pose.getOrigin().z();
-        ROS_INFO("%s", ss.str().c_str());
+        //std::stringstream ss;
+        //ss << "Trajectory Position"
+        //<< " x:" << desired_pose.getOrigin().x()
+        //<< " y:" << desired_pose.getOrigin().y()
+        //<< " z:" << desired_pose.getOrigin().z();
+        //ROS_INFO("%s", ss.str().c_str());
 
     #if TFOUTPUT
         br.sendTransform(tf::StampedTransform(desired_pose, ros::Time::now(), "world", "av-desired"));
