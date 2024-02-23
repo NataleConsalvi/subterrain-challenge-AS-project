@@ -1,0 +1,8 @@
+
+<launch>
+
+<include file="$(find perception)/launch/depth2pcl_colored.launch"/>
+
+<include file="$(find perception)/launch/light_detection.launch"/>
+
+</launch>

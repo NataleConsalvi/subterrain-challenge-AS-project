@@ -20,34 +20,99 @@ class LightDetector(object):
         # Node cycle rate (in Hz).
         self.loop_rate = rospy.Rate(10)
 
+
+        self.init_params()
+
+
         # Subscribers
-        self.semantic_camera_subscriber = rospy.Subscriber("/unity_ros/Quadrotor/Sensors/SemanticCamera/image_raw", Image, self.sem_image_callback)
+        self.semantic_camera_subscriber = rospy.Subscriber(self.semantic_img_input_topic,
+            Image, self.sem_image_callback)
         self.sem_img = None
 
-        self.semantic_camera_info_subscriber = rospy.Subscriber("/unity_ros/Quadrotor/Sensors/SemanticCamera/camera_info", CameraInfo, self.camera_info_callback)
-        self.point_cloud_subscriber = rospy.Subscriber("/perception/pcl/out_colored", PointCloud2, self.point_cloud_callback)
+        self.semantic_camera_info_subscriber = rospy.Subscriber(self.semantic_camera_info_input_topic,
+            CameraInfo, self.camera_info_callback)
 
-        self.rgb_camera_subscriber = rospy.Subscriber("/realsense/rgb/left/image_raw", Image, self.rgb_image_callback)
+        self.point_cloud_subscriber = rospy.Subscriber(self.pcl_input_topic,
+            PointCloud2, self.point_cloud_callback)
+
+        self.rgb_camera_subscriber = rospy.Subscriber(self.rgb_img_input_topic,
+            Image, self.rgb_image_callback)
         self.rgb_img = None
 
-        self._image_pub = rospy.Publisher("/perception/processed_image", Image, queue_size=10)
 
-        self.overlayed_image_pub = rospy.Publisher("/perception/overlayed_image", Image, queue_size=10)
+        # Publishers
+        if self.publish_proc_sem_img:
+            self.proc_sem_img_pub = rospy.Publisher(self.proc_sem_img_out_topic,
+                Image, queue_size=10)
 
-        self.object_pcl_pub = rospy.Publisher("/perception/object_pcl", PointCloud2, queue_size=10)
 
-        self.object_bb_pub = rospy.Publisher("/perception/object_bb", Detection3DArray, queue_size=10)
+        if self.publish_overlayed_rgb_img:
+            self.overlayed_image_pub = rospy.Publisher(self.overlayed_rgb_img_out_topic,
+                Image, queue_size=10)
+        
+        if self.publish_object_pcl:
+            self.object_pcl_pub = rospy.Publisher(self.object_pcl_out_topic,
+                PointCloud2, queue_size=10)
 
-        self.object_marker_pub = rospy.Publisher("/perception/object_marker", MarkerArray, queue_size=10)
+        if self.publish_object_bb:
+            self.object_bb_pub = rospy.Publisher(self.object_bb_out_topic,
+                Detection3DArray, queue_size=10)
+
+        if self.publish_object_vis_markers:
+            self.object_marker_pub = rospy.Publisher(self.object_vis_out_topic,
+                MarkerArray, queue_size=10)
 
         self.tf_buffer = tf2_ros.Buffer() 
         tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         # Placeholder for camera intrinsic parameters
         self.K = None
-        self.P = None
 
         self.mask = None
+
+
+    def init_params(self):
+        self.semantic_img_input_topic = rospy.get_param(
+            "/perception_params/semantic_camera_img_input_topic")
+        self.semantic_camera_info_input_topic = rospy.get_param(
+            "/perception_params/semantic_camera_info_input_topic")
+
+        self.pcl_input_topic = rospy.get_param(
+            "/perception_params/pcl_input_topic")
+
+        self.rgb_img_input_topic = rospy.get_param(
+            "/perception_params/rgb_img_input_topic")
+
+        self.publish_proc_sem_img = rospy.get_param(
+            "/perception_params/publish_2d_processed_semantic_img")
+        self.proc_sem_img_out_topic = rospy.get_param(
+            "/perception_params/2d_processed_semantic_img_out_topic")
+
+        self.publish_overlayed_rgb_img = rospy.get_param(
+            "/perception_params/publish_overlayed_rgb_img")
+        self.overlayed_rgb_img_out_topic = rospy.get_param(
+            "/perception_params/overlayed_rgb_img_out_topic")
+        
+        self.publish_object_pcl = rospy.get_param(
+            "/perception_params/publish_object_pcl")
+        self.object_pcl_out_topic = rospy.get_param(
+            "/perception_params/object_pcl_out_topic")
+
+        self.publish_object_bb = rospy.get_param(
+            "/perception_params/publish_object_bb")
+        self.object_bb_out_topic = rospy.get_param(
+            "/perception_params/object_bb_out_topic")
+        
+        self.publish_object_vis_markers = rospy.get_param(
+            "/perception_params/publish_object_vis_markers")
+        self.object_vis_out_topic = rospy.get_param(
+            "/perception_params/object_vis_out_topic")
+
+        self.mean_k = rospy.get_param(
+            "/perception_params/mean_k")
+        self.thresh = rospy.get_param(
+            "/perception_params/thresh")
+
 
     def camera_info_callback(self, msg):
         rospy.loginfo('Camera Info received...')
@@ -106,17 +171,18 @@ class LightDetector(object):
         # Find contours from the binary image
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Draw bounding box
-        for contour in contours:
-            x, y, w, h = cv2.boundingRect(contour)
-            cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)  # Blue bounding box
 
         # Display the result
-        try:
-            ros_image = self.bridge.cv2_to_imgmsg(image, "bgr8")
-            self._image_pub.publish(ros_image)
-        except CvBridgeError as e:
-            rospy.logerr(f"CvBridge Error in Publishing: {e}")
+        if self.publish_proc_sem_img:
+            # Draw bounding box
+            for contour in contours:
+                x, y, w, h = cv2.boundingRect(contour)
+                cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)  # Blue bounding box
+            try:
+                ros_image = self.bridge.cv2_to_imgmsg(image, "bgr8")
+                self.proc_sem_img_pub.publish(ros_image)
+            except CvBridgeError as e:
+                rospy.logerr(f"CvBridge Error in Publishing: {e}")
 
     
     
@@ -137,7 +203,8 @@ class LightDetector(object):
 
             for u_, v_ in zip(u,v):
                 image = cv2.circle(self.rgb_img, (int(u_),int(v_)), radius=0, color=(0, 0, 255), thickness=-1)
-            self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
+            if self.publish_overlayed_rgb_img:
+                self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
 
 
             if self.mask is not None:
@@ -151,9 +218,9 @@ class LightDetector(object):
                 object_pcl_arr = pcl_array[res_mask]
 
                 pcl_cloud = pcl.PointCloud(object_pcl_arr.astype(np.float32))
-                mean_k = 20
-                tresh = 0.1
-                filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud,mean_k,tresh)
+    
+                filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud, 
+                    self.mean_k,self.thresh)
                 filtered_np_cloud = np.asarray(filtered_pcl_cloud)
 
                 # Convert pcl_array to a structured array with named fields
@@ -162,16 +229,18 @@ class LightDetector(object):
                 structured_array['y'] = filtered_np_cloud[:, 1]
                 structured_array['z'] = filtered_np_cloud[:, 2]
 
-                object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
+                if self.publish_object_pcl:
+                    object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
+                    self.object_pcl_pub.publish(object_pcl_msg)
 
-                self.object_pcl_pub.publish(object_pcl_msg)
-                
-                bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
-                bb_array.header = data.header
-                self.object_bb_pub.publish(bb_array)
+                if self.publish_object_bb or self.publish_object_vis_markers:   
+                    bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
+                    bb_array.header = data.header
+                    self.object_bb_pub.publish(bb_array)
 
-                markers_array = self.create_marker_from_bb(bb_array)
-                self.object_marker_pub.publish(markers_array)
+                if self.publish_object_vis_markers:
+                    markers_array = self.create_marker_from_bb(bb_array)
+                    self.object_marker_pub.publish(markers_array)
 
         except tf2_ros.LookupException as e:
             rospy.logerr(e)
