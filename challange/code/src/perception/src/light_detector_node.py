@@ -11,6 +11,7 @@ from vision_msgs.msg import Detection3DArray, Detection3D, BoundingBox3D
 from visualization_msgs.msg import MarkerArray, Marker
 from cv_bridge import CvBridge, CvBridgeError
 from image_geometry import PinholeCameraModel
+from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 
 class LightDetector(object):
     def __init__(self):
@@ -19,7 +20,6 @@ class LightDetector(object):
 
         # Node cycle rate (in Hz).
         self.loop_rate = rospy.Rate(10)
-
 
         self.init_params()
 
@@ -70,6 +70,7 @@ class LightDetector(object):
 
         self.mask = None
 
+        self.detected_lights = None
 
     def init_params(self):
         self.semantic_img_input_topic = rospy.get_param(
@@ -107,6 +108,9 @@ class LightDetector(object):
             "/perception_params/publish_object_vis_markers")
         self.object_vis_out_topic = rospy.get_param(
             "/perception_params/object_vis_out_topic")
+        
+        self.pub_in_world_coords = rospy.get_param(
+            "/perception_params/publish_in_world_coords")
 
         self.mean_k = rospy.get_param(
             "/perception_params/mean_k")
@@ -192,8 +196,8 @@ class LightDetector(object):
             frame_id = data.header.frame_id
 
             ## Assume the semantic image and left rgb image are in the same frame so no need for transformation
-            # transform = tf_buffer.lookup_transform('/Quadrotor/Sensors/RGBCameraLeft', frame_id, rospy.Time(), rospy.Duration(1.0))
-            # cloud_transformed = tf2_ros.do_transform_cloud(data, transform)
+            # transform = self.tf_buffer.lookup_transform('/Quadrotor/Sensors/RGBCameraLeft', frame_id, rospy.Time(), rospy.Duration(1.0))
+            # cloud_transformed = do_transform_cloud(data.cloud, transform)
 
             # convert msg to numpy
             pcl_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data)
@@ -229,13 +233,24 @@ class LightDetector(object):
                 structured_array['y'] = filtered_np_cloud[:, 1]
                 structured_array['z'] = filtered_np_cloud[:, 2]
 
+                object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
+
+                pcl_header = data.header
+                if self.pub_in_world_coords:
+                    transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
+                    object_pcl_cloud = do_transform_cloud(object_pcl_msg, transform)
+                    filtered_np_cloud = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(object_pcl_cloud)
+                    pcl_header.frame_id = 'world'
+
                 if self.publish_object_pcl:
-                    object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
+                    if self.pub_in_world_coords:
+                        object_pcl_msg = object_pcl_cloud
+                        object_pcl_msg.header = pcl_header
                     self.object_pcl_pub.publish(object_pcl_msg)
 
                 if self.publish_object_bb or self.publish_object_vis_markers:   
                     bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
-                    bb_array.header = data.header
+                    bb_array.header = pcl_header
                     self.object_bb_pub.publish(bb_array)
 
                 if self.publish_object_vis_markers:
