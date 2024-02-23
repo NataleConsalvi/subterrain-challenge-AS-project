@@ -1,6 +1,6 @@
 <launch>
   <arg name="rate" default="1"/>
-  <arg name="namespace" default="$(env UAV_NAMESPACE)"/>
+  <arg name="namespace" default="airsim_ros_node"/>
   <arg name="odometry" default="/current_state_est"/>
   <arg name="cloud_in" default="/perception/depth_camera/point_cloud_2"/>
   <arg name="point_reached" default="exploration/point_reached"/>
