@@ -4,6 +4,7 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <nav_msgs/Odometry.h>
 #include <stdlib.h>
 //#include <service_pkg/stop_service.h>
@@ -12,6 +13,8 @@ class State_Machine{
     // Node
     ros::NodeHandle nh_;
     ros::NodeHandle nh_relative_;
+
+    ros::Subscriber desired_state_subscriber;
 
     //Timer controll the main node
     ros::Timer timermission;
@@ -42,7 +45,7 @@ class State_Machine{
     std_msgs::Int64 mission_state_msgs;
     
     
-    ros::Subscriber current_state_subscriber;
+    //ros::Subscriber current_state_subscriber;
     
     ros::ServiceClient switch_client;
     //service_pkg::switch_autonomous_state srv;
@@ -75,15 +78,18 @@ public:
         
         // use timer to schedule events
         timermission = nh_.createTimer(ros::Duration(0.1), &State_Machine::state_machine_loop, this);
+
+        // Subscribe to the desired state topic
+        desired_state_subscriber = nh_.subscribe("/airsim_ros_node/desired_state2", 1, &State_Machine::desired_state_callback, this);
     }
 
     void state_machine_loop(const ros::TimerEvent& t){
         if (!init) {
             ros::Duration(10.0).sleep();  // Sleep for 10 seconds
             init = true;
-            mission_state_msgs.data = mission_state;
-            drone_state_pub.publish(mission_state_msgs);
-            ROS_INFO("State defined to: PREDIFINED ROUTE");
+            //mission_state_msgs.data = mission_state;
+            //drone_state_pub.publish(mission_state_msgs);
+            //ROS_INFO("State defined to: PREDIFINED ROUTE");
         }
         if(mission_state == 1){initial_state();}
         if(mission_state == 2){predefined_state();}
@@ -93,12 +99,32 @@ public:
     }
 
     void publish_state_message(int new_state) {
-    if (mission_state != new_state) {
-        mission_state = new_state;
-        mission_state_msgs.data = new_state;
-        drone_state_pub.publish(mission_state_msgs);
+        if (mission_state != new_state) {
+            mission_state = new_state;
+            mission_state_msgs.data = new_state;
+            drone_state_pub.publish(mission_state_msgs);
+        }
     }
-}
+
+    void desired_state_callback(const trajectory_msgs::MultiDOFJointTrajectoryPoint& desired_state)
+    {
+        // Assuming the cave entrance position is (cave_x, cave_y, cave_z)
+        double cave_x = -321.0;
+        double cave_y = 10.0;
+        double cave_z = 15.0;
+
+        // Extract the x, y, z coordinates of the desired state
+        double x = desired_state.transforms[0].translation.x;
+        double y = desired_state.transforms[0].translation.y;
+        double z = desired_state.transforms[0].translation.z;
+
+        // Calculate the distance between the desired state and the cave entrance
+        double distance_to_cave = std::sqrt(std::pow(x - cave_x, 2) + std::pow(y - cave_y, 2) + std::pow(z - cave_z, 2));
+
+        // Set autonomous_check to true if the distance is less than or equal to 0.2
+        autonomous_check = (distance_to_cave <= 0.2);
+
+    }
 
     void initial_state()
     {
@@ -128,8 +154,8 @@ public:
     {
 
         mission_state_msgs.data = 3;
-        publish_state_message(mission_state_msgs.data);
-        //drone_state_pub.publish(mission_state_msgs);
+        //publish_state_message(mission_state_msgs.data);
+        drone_state_pub.publish(mission_state_msgs);
 
         // land_server = nh_.advertiseService("stop_service", &State_Machine::stop_flag, this);
         if (landing_check)
