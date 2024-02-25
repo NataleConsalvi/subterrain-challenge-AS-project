@@ -8,12 +8,11 @@
 #include <nav_msgs/Odometry.h>
 #include <stdlib.h>
 //#include <state_machine_pkg/Transition.h>
-#include <roslaunch/Process.h>
-#include <roslaunch/ProcessLaunchInfo.h>
-#include <roslaunch/ProcessManager.h>
+#include <cstdlib>
+#include <ros/package.h>
 
 
-roslaunch::ProcessManager process_manager;
+//roslaunch::ProcessManager process_manager;
 
 class State_Machine{
     // Node
@@ -40,6 +39,7 @@ class State_Machine{
 
     // True when server send the massage
     bool landing_check;
+    int founded_lights;
 
     // For checking landed
     bool landed;
@@ -50,7 +50,7 @@ class State_Machine{
     ros::Publisher drone_state_pub; 
     std_msgs::Int64 mission_state_msgs;
 
-    roslaunch::Process launch_process;
+    //roslaunch::Process launch_process;
     
     
     //ros::Subscriber current_state_subscriber;
@@ -71,6 +71,7 @@ public:
         //launch_flag = false;
         autonomous_check = false;
         landing_check = false;
+        founded_lights = 0;
         landed = false;
 
         call_autonomous_state_service = true;
@@ -137,6 +138,15 @@ public:
 
     }
 
+    void autonomous_finished(const trajectory_msgs::MultiDOFJointTrajectoryPoint& desired_state)
+    {
+        founded_lights++;
+        if(founded_lights>=4)
+        {
+            landing_check = true;
+        }
+    }
+
     void initial_state()
     {
         mission_state_msgs.data = 1;
@@ -160,6 +170,17 @@ public:
             mission_state = 3;
             
             // Execute roslaunch command
+            // Get the path of the current package
+            std::string package_path = "/home/marcel/subterrain-challenge-AS-project/challange/code/src/state_machine_pkg";
+
+            // Construct the full path of the launch file
+            std::string launch_file_path = package_path + "/launch/predefined2autonomous.launch";
+
+            // Use system() to execute the launch file
+            std::string command = "roslaunch state_machine_pkg predefined2autonomous.launch";
+            int result = system(command.c_str());
+            
+            /*
             std::string package = "state_machine_pkg";
             std::string launch_file = "predefined2autonomous.launch";
             std::vector<std::string> args = {"arg1:=value1", "arg2:=value2"};
@@ -170,7 +191,7 @@ public:
             } else {
                 ROS_ERROR("Failed to start the roslaunch autonomous state process.");
             }
-            /*
+            
             if (call_autonomous_state_service) {
                 state_machine::Transition srv;
                 srv.request.new_state = "autonomous_exploration";
