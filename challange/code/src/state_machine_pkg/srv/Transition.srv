@@ -1,4 +1,0 @@
-# Transition.srv
-string new_state
----
-bool success

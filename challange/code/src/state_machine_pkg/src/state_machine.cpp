@@ -7,10 +7,11 @@
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <nav_msgs/Odometry.h>
 #include <stdlib.h>
-#include <state_machine_pkg/Transition.h>
+//#include <state_machine_pkg/Transition.h>
 #include <roslaunch/Process.h>
 #include <roslaunch/ProcessLaunchInfo.h>
 #include <roslaunch/ProcessManager.h>
+
 
 roslaunch::ProcessManager process_manager;
 
@@ -48,13 +49,15 @@ class State_Machine{
 
     ros::Publisher drone_state_pub; 
     std_msgs::Int64 mission_state_msgs;
+
+    roslaunch::Process launch_process;
     
     
     //ros::Subscriber current_state_subscriber;
     
-    ros::ServiceClient switch_client;
+    //ros::ServiceClient switch_client;
     //service_pkg::switch_autonomous_state srv;
-    ros::ServiceServer land_server;
+    //ros::ServiceServer land_server;
 
 
 public:
@@ -87,7 +90,7 @@ public:
         // Subscribe to the desired state topic
         desired_state_subscriber = nh_.subscribe("/airsim_ros_node/desired_state2", 1, &State_Machine::desired_state_callback, this);
 
-        switch_client = nh_.serviceClient<state_machine::Transition>("/state_transition"); 
+        //switch_client = nh_.serviceClient<state_machine::Transition>("/state_transition"); 
 
     }
 
@@ -155,6 +158,19 @@ public:
         if (autonomous_check)
         {
             mission_state = 3;
+            
+            // Execute roslaunch command
+            std::string package = "state_machine_pkg";
+            std::string launch_file = "predefined2autonomous.launch";
+            std::vector<std::string> args = {"arg1:=value1", "arg2:=value2"};
+
+            roslaunch::ProcessLaunchInfo launch_info(package, launch_file, args);
+            if (launch_process.start(launch_info)) {
+                ROS_INFO("Successfully started the roslaunch autonomous state process.");
+            } else {
+                ROS_ERROR("Failed to start the roslaunch autonomous state process.");
+            }
+            /*
             if (call_autonomous_state_service) {
                 state_machine::Transition srv;
                 srv.request.new_state = "autonomous_exploration";
@@ -170,6 +186,7 @@ public:
                     ROS_ERROR("Failed to call state_transition service.");
                 }
             }
+            */
         }
     }
 
