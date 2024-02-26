@@ -8,16 +8,16 @@ exploration:
   depth: 14
   # if the candidate point is inside the radius of the previous visited points,
   # the candidate is deleted from the candidate list
-  radius: 5.5
+  radius: 0.1
   # bounding box: necessary to limit the simulation 
   # scenario (smaller than actual gazebo scenario)
   # used for frontier detection
-  bbx_minX: -100.0
-  bbx_maxX: 100.0
-  bbx_minY: -90.0
-  bbx_maxY: 90.0
-  bbx_minZ: -15.0
-  bbx_maxZ: 15.0
+  bbx_minX: -355.0
+  bbx_maxX: 300.0
+  bbx_minY: -30.0
+  bbx_maxY: 30.0
+  bbx_minZ: -30.0
+  bbx_maxZ: 30.0
 
   # Length of one side of the cube inside which we calculate information gain
   box_length: 8.0
@@ -28,14 +28,14 @@ exploration:
 
 
   # Total volume of the environment for exploration in m^3
-  volume: 50000
+  volume: 500000
 sensor_model:
   # Field of view in degrees
-  horizontalFOV: 360
-  verticalFOV: 30
+  horizontalFOV: 320
+  verticalFOV: 180
   # VelodyneVLP16 max range in meters
-  max_range: 10
-  pitch_angle: 10.0
+  max_range: 30
+  pitch_angle: 30.0
 
   probability_hit: 0.7
   probability_miss: 0.4

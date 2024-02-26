@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "traj_publisher");
     ros::NodeHandle n;
-    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("desired_state", 1);
+    ros::Publisher desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("red/position_hold/trajectory", 1);
     ros::Rate loop_rate(500);
     ros::Time start(ros::Time::now());
 

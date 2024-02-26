@@ -1,7 +1,7 @@
 <launch>
   <arg name="rate" default="10" />
   <arg name="namespace" default="$(env UAV_NAMESPACE)" />
-  <arg name="odometry" default="odometry"/>
+  <arg name="odometry" default="/current_state_est"/>
 
   <group ns="$(arg namespace)">
     <node name="execute_trajectory" pkg="uav_frontier_exploration_3d" 
