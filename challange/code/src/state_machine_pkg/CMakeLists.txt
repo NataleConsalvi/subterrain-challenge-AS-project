@@ -29,6 +29,7 @@ catkin_package(
     std_msgs
     tf_conversions
     roslaunch
+    roslib
 )
 
 #add_service_files(

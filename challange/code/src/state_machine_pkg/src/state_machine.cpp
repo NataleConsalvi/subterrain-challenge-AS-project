@@ -9,6 +9,7 @@
 #include <stdlib.h>
 //#include <state_machine_pkg/Transition.h>
 #include <cstdlib>
+#include <fstream>
 #include <ros/package.h>
 
 
@@ -169,6 +170,19 @@ public:
         {
             mission_state = 3;
             
+            std::string workspace_path = ros::package::getPath("state_machine_pkg");
+            std::string setup_bash_path = workspace_path + "/../devel/setup.bash";
+            if (std::ifstream(setup_bash_path.c_str())) {
+                std::string source_command = "source " + setup_bash_path;
+                system(source_command.c_str());
+                
+                std::string launch_file_path = workspace_path + "/launch/predefined2autonomous.launch";
+                ROS_INFO_STREAM("Launching " << launch_file_path);
+                std::string launch_command = "roslaunch " + launch_file_path;
+                system(launch_command.c_str());
+            }
+            
+            /*
             // Execute roslaunch command
             // Get the path of the current package
             std::string package_path = "/home/marcel/subterrain-challenge-AS-project/challange/code/src/state_machine_pkg";
@@ -178,9 +192,10 @@ public:
 
             // Use system() to execute the launch file
             std::string command = "roslaunch state_machine_pkg predefined2autonomous.launch";
+            
             int result = system(command.c_str());
             
-            /*
+            
             std::string package = "state_machine_pkg";
             std::string launch_file = "predefined2autonomous.launch";
             std::vector<std::string> args = {"arg1:=value1", "arg2:=value2"};
