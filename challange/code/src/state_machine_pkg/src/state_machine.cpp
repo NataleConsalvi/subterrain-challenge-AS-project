@@ -98,7 +98,7 @@ public:
 
     void state_machine_loop(const ros::TimerEvent& t){
         if (!init) {
-            ros::Duration(10.0).sleep();  // Sleep for 10 seconds
+            ros::Duration(20.0).sleep();  // Sleep for 10 seconds
             init = true;
             //mission_state_msgs.data = mission_state;
             //drone_state_pub.publish(mission_state_msgs);

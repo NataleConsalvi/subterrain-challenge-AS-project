@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <tf/LinearMath/Quaternion.h>
+#include <nav_msgs/Odometry.h>
 
 #define FLY_TOWARDS_TARGET 1
 
@@ -27,6 +28,11 @@ private:
     geometry_msgs::Twist acceleration;
  
     tf::Transform desired_pose;
+    
+    ros::Subscriber current_state;
+    
+    tf::Vector3 actual_coordinates;
+    tf::Vector3 previous_coordinates;
 
 public:
     //Constructor
@@ -49,6 +55,7 @@ public:
         acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
 
         received_state  = n.subscribe("/state", 1, &TrajPublisher::State_callback, this);
+        current_state = n.subscribe("current_state_est", 1, &TrajPublisher::onCurrentState, this);
     }
 
 
@@ -93,7 +100,12 @@ public:
                             desired_pose.setOrigin(tf::Vector3(origin.x(), origin.y(), origin.z() + t / takeoff_duration * (target_height - origin.z())));
                             desired_pose.setRotation(takeoff_rotation);
                             publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);        
-                        }        
+                        }   
+                        
+                        
+                          
+                             
+                
                         if (t >= takeoff_duration && t <= takeoff_duration + cruise_duration) 
                         {
                             //ROS_INFO("Phase: Cruise");
@@ -125,6 +137,9 @@ public:
                         {
                             reachedcave = true;
                         }
+                        
+                        
+                        
                         ros::spinOnce();
                         loop_rate.sleep();
                         //++count;
@@ -136,9 +151,48 @@ public:
                 //CODE
                 break;
 
+
+
                 case 4:
-                //CODE
-                break;
+                {
+                   	velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
+        		velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
+        
+       	        acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
+        		acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
+        		
+                	bool landed = false;
+                	bool first = true; 
+                       
+                       while (!landed){  
+                            if(first){
+                               desired_pose.setOrigin(tf::Vector3(actual_coordinates.x(), actual_coordinates.y(), actual_coordinates.z() - 0.2));
+
+                    		publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);
+                    		first = false;
+                    		previous_coordinates = actual_coordinates;
+                            }
+                            else{
+                                if(previous_coordinates.x() != actual_coordinates.x() || 
+           		            previous_coordinates.y() != actual_coordinates.y() || 
+            		            previous_coordinates.z() != actual_coordinates.z()) {
+            		            
+                               desired_pose.setOrigin(tf::Vector3(actual_coordinates.x(), actual_coordinates.y(), actual_coordinates.z() - 0.2));
+
+                    		 publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);
+                    		 previous_coordinates = actual_coordinates;
+                    		 }
+                    		 else{
+                    		 	landed = true;
+                    		 	
+                    		 		
+                    		 }
+                    		
+                            }
+
+                       }
+                         }
+                   break;
 
                 case 5:
                 //CODE
@@ -147,6 +201,17 @@ public:
         }
     }
 
+
+
+  void onCurrentState(const nav_msgs::Odometry& cur_state){  
+     tf::Vector3 position(cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z);
+     actual_coordinates = position;
+
+       
+  }
+  
+  
+ 
     void publishDesiredState(const tf::Transform& desired_pose,
                             const geometry_msgs::Twist& velocity,
                             const geometry_msgs::Twist& acceleration,
