@@ -8,12 +8,12 @@
 #include <nav_msgs/Odometry.h>
 #include <stdlib.h>
 //#include <state_machine_pkg/Transition.h>
-#include <roslaunch/Process.h>
-#include <roslaunch/ProcessLaunchInfo.h>
-#include <roslaunch/ProcessManager.h>
+#include <cstdlib>
+#include <fstream>
+#include <ros/package.h>
 
 
-roslaunch::ProcessManager process_manager;
+//roslaunch::ProcessManager process_manager;
 
 class State_Machine{
     // Node
@@ -40,6 +40,7 @@ class State_Machine{
 
     // True when server send the massage
     bool landing_check;
+    int founded_lights;
 
     // For checking landed
     bool landed;
@@ -50,7 +51,7 @@ class State_Machine{
     ros::Publisher drone_state_pub; 
     std_msgs::Int64 mission_state_msgs;
 
-    roslaunch::Process launch_process;
+    //roslaunch::Process launch_process;
     
     
     //ros::Subscriber current_state_subscriber;
@@ -71,6 +72,7 @@ public:
         //launch_flag = false;
         autonomous_check = false;
         landing_check = false;
+        founded_lights = 0;
         landed = false;
 
         call_autonomous_state_service = true;
@@ -137,6 +139,15 @@ public:
 
     }
 
+    void autonomous_finished(const trajectory_msgs::MultiDOFJointTrajectoryPoint& desired_state)
+    {
+        founded_lights++;
+        if(founded_lights>=4)
+        {
+            landing_check = true;
+        }
+    }
+
     void initial_state()
     {
         mission_state_msgs.data = 1;
@@ -158,41 +169,29 @@ public:
         if (autonomous_check)
         {
             mission_state = 3;
-            
-            // Execute roslaunch command
-            std::string package = "state_machine_pkg";
-            std::string launch_file = "predefined2autonomous.launch";
-            std::vector<std::string> args = {"arg1:=value1", "arg2:=value2"};
 
-            roslaunch::ProcessLaunchInfo launch_info(package, launch_file, args);
-            if (launch_process.start(launch_info)) {
-                ROS_INFO("Successfully started the roslaunch autonomous state process.");
-            } else {
-                ROS_ERROR("Failed to start the roslaunch autonomous state process.");
+            std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
+            std::string source = "source devel/setup.bash";
+            std::string command = "roslaunch state_machine_pkg predefined2autonomous.launch";
+
+            // Dynamically obtain the home directory of the user
+            const char* homeDir = std::getenv("HOME");
+            if (homeDir == nullptr) {
+                std::cerr << "Error: Unable to determine the home directory." << std::endl;
             }
-            /*
-            if (call_autonomous_state_service) {
-                state_machine::Transition srv;
-                srv.request.new_state = "autonomous_exploration";
-                if (switch_client.call(srv)) {
-                    call_autonomous_state_service = false;
-                    success = srv.response.success;
-                    if (success) {
-                        ROS_INFO("Successfully transitioned to autonomous exploration state.");
-                    } else {
-                        ROS_ERROR("Failed to transition to autonomous exploration state.");
-                    }
-                } else {
-                    ROS_ERROR("Failed to call state_transition service.");
-                }
-            }
-            */
+
+            // Combine commands to be executed in a new terminal with changed working directory
+            std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
+                                    + intoworkspace + " && " + source + " && " + command + "; exec bash'";
+            
+            system(fullCommand.c_str());
+            ROS_INFO("Opened new terminal");
         }
     }
 
     void autonomous_state()
     {
-
+        founded_lights++;
         mission_state_msgs.data = 3;
         //publish_state_message(mission_state_msgs.data);
         drone_state_pub.publish(mission_state_msgs);
@@ -201,6 +200,14 @@ public:
         if (landing_check)
         {
             mission_state = 4;
+            
+            const char* roslaunchProcessName = "roslaunch state_machine_pkg predefined2autonomous.launch";
+
+            // Construct the command to find and kill the roslaunch process
+            std::string killCommand = "pkill -f \"" + std::string(roslaunchProcessName) + "\"";
+
+            // Execute the command
+            system(killCommand.c_str());
         }
     }
 
@@ -238,6 +245,4 @@ int main(int argc, char* argv[])
 
     ros::spin();
 }
-
-
 

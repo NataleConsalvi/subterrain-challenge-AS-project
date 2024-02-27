@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(state_machine_pkg)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -29,6 +29,7 @@ catkin_package(
     std_msgs
     tf_conversions
     roslaunch
+    roslib
 )
 
 #add_service_files(
