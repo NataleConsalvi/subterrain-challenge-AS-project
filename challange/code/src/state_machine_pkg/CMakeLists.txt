@@ -15,33 +15,39 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   tf_conversions
-  message_generation
+  roslaunch
 )
 
 find_package(Eigen3)
 
 catkin_package(
-#  INCLUDE_DIRS include
-  # LIBRARIES state_machine_pkg
   CATKIN_DEPENDS
-#  DEPENDS system_lib
-  eigen_conversions
-  geometry_msgs
-  mav_msgs
-  roscpp
-  std_msgs
-  tf_conversions
-  message_runtime
+    eigen_conversions
+    geometry_msgs
+    mav_msgs
+    roscpp
+    std_msgs
+    tf_conversions
+    roslaunch
 )
 
+#add_service_files(
+#  FILES
+#  Transition.srv
+#)
+
 add_library(state_machine_pkg INTERFACE)
-target_include_directories(state_machine_pkg INTERFACE include)
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
 )
 
 add_executable(state_machine src/state_machine.cpp)
-add_dependencies(state_machine  ${catkin_EXPORTED_TARGETS})
+add_dependencies(state_machine ${catkin_EXPORTED_TARGETS})
 target_link_libraries(state_machine ${catkin_LIBRARIES})
+
+#add_executable(state_transition src/state_transition.cpp)
+#add_dependencies(state_transition ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(state_transition ${catkin_LIBRARIES})
+
+
