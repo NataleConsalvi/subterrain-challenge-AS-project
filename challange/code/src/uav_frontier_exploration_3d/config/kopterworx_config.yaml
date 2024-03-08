@@ -84,7 +84,7 @@ path_planner:
     # Bounds are defined by
     # bounds: [[[-15, 9], [-4, 45], [0.0, 10.0], [-3.15, 3.15]]] 
     # bounds: [[[-22, 8], [-13, 29], [0.5, 4.0], [-3.15, 3.15]]]
-    bounds: [[[-355.0, 300.0], [-30.0, 30.0], [-30.0, 30.0], [-3.15, 3.15]]]
+    bounds: [[[-500.0, -319.0], [-30.0, 30.0], [-30.0, 30.0], [-3.15, 3.15]]]
 
   # RRT* parameter set
 
@@ -96,7 +96,7 @@ path_planner:
   longest_valid_segment:
     is_used: true
     is_metric: true
-    value: 0.04
+    value: 0.3
   # Probability the planner will choose the goal state.
   goal_bias:
     is_used: true
@@ -104,7 +104,7 @@ path_planner:
   # Maximum length of a motion added in the tree of motions.
   range:
     is_used: true
-    value: 2.0
+    value: 3.0
   # Rewiring scale factor
   rewire_factor:
     is_used: false
@@ -183,7 +183,7 @@ toppra_trajectory:
   # Maximum accelerations for [x, y, z, yaw]
   accelerations: [1.2, 1.2, 0.5, 0.8]
   # If using SO states angular must be set to 1
-  is_angular: [0, 0, 0, 1]
+  is_angular: [0, 0, 0, 0]
   # Trajectory sampling frequency
   sampling_frequency: 100.0
 
@@ -194,13 +194,13 @@ state_validity_checker:
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.
   ball:
-    radius: 0.4
+    radius: 0.1
     resolution: 0.1
 
   # Just one sphere
   sphere:
-    radius: 0.3
-    resolution: 0.1
+    radius: 1.0
+    resolution: 0.3
 
   # Circle can be useful for 2D exploration
   circle:
