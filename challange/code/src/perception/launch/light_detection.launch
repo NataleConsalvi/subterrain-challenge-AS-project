@@ -1,0 +1,11 @@
+
+<launch>
+
+    <group ns="perception_params">
+        <rosparam file="$(find perception)/config/perception_params.yaml" />
+    </group>
+
+    <node name="light_detection_node" pkg="perception" type="light_detector_node.py" output="screen">
+
+    </node>
+</launch>
