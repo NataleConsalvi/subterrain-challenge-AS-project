@@ -100,30 +100,27 @@ class UavExplorationSm:
                 request = MultiDofTrajectoryRequest()
                 # Create a start point from current position information
                 trajectory_point = JointTrajectoryPoint()
-                
-		if self.current_reference.transforms:
-		    # Accedi agli elementi solo se la lista transforms non è vuota
-		    trajectory_point.positions = [
-			self.current_reference.transforms[0].translation.x,
-			self.current_reference.transforms[0].translation.y,
-			self.current_reference.transforms[0].translation.z,
-			self.quaternion2Yaw(self.current_reference.transforms[0].rotation)
-		    ]
-		else:
-		    # Gestisci il caso in cui la lista transforms è vuota o non presente
-		    print("Warning: transforms list is empty.")
 
-                
-                trajectory_point.positions = [self.current_reference.transforms[0].translation.x,
-                                              self.current_reference.transforms[0].translation.y,
-                                              self.current_reference.transforms[0].translation.z,
-                                              self.quaternion2Yaw(self.current_reference.transforms[0].rotation)]
+                if self.current_reference.transforms:
+                    trajectory_point.positions = [
+                        self.current_reference.transforms[0].translation.x,
+                        self.current_reference.transforms[0].translation.y,
+                        self.current_reference.transforms[0].translation.z,
+                        self.quaternion2Yaw(self.current_reference.transforms[0].rotation)
+                    ]
+                else:
+                    # Gestisci il caso in cui self.current_reference.transforms è vuoto
+                    print("Error: Empty transforms in current_reference!")
+
                 request.waypoints.points.append(copy.deepcopy(trajectory_point))
                 # Create a start point from target position information
                 trajectory_point = JointTrajectoryPoint()
-                trajectory_point.positions = [self.target_pose.position.x,
-                                              self.target_pose.position.y, self.target_pose.position.z,
-                                              self.quaternion2Yaw(self.target_pose.orientation)]
+                trajectory_point.positions = [
+                    self.target_pose.position.x,
+                    self.target_pose.position.y, 
+                    self.target_pose.position.z,
+                    self.quaternion2Yaw(self.target_pose.orientation)
+                ]
                 request.waypoints.points.append(copy.deepcopy(trajectory_point))
                 # Set up flags
                 request.publish_path = False
@@ -219,6 +216,7 @@ class UavExplorationSm:
                 self.feedback_array_index = 0
 
     def referenceCallback(self, msg):
+        print("QUI DI SOVREBBE FAR QUALCOSA.")
         self.current_reference = msg
 
     def executingTrajectoryCallback(self, msg):

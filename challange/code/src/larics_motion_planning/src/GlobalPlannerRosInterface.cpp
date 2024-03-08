@@ -264,7 +264,7 @@ bool GlobalPlannerRosInterface::multiDofTrajectoryCallback(
 {
   visualization_changed_ = true;
   bool success = false;
-  cout << "Multi DOF Trajectory Callback" << endl;
+  cout << "Multi DOF Trajectory Callback (siamo qui)" << endl;
   // Convert waypoints to planner message type
   if (req.waypoints.points.size() < 2){
     cout << "At least two points required for generating trajectory." << endl;

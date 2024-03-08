@@ -34,7 +34,7 @@ class JointTrajectoryToMultiDofTrajectoryPoint:
             self.airdrop_counter = 0
             self.uav_current_pose = Pose()
             self.uav_current_velocity = Twist()
-            #rospy.Subscriber('odometry', Odometry, self.uavOdometryCallback, queue_size=1)
+            rospy.Subscriber('odometry', Odometry, self.uavOdometryCallback, queue_size=1)
             rospy.Subscriber('pose', PoseStamped, self.uavPoseCallback, queue_size=1)
             rospy.Subscriber('velocity_relative', TwistStamped, self.uavVelocityCallback, queue_size=1)
             self.delta = 1000
