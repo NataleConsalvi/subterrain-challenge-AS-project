@@ -7,6 +7,7 @@ import toppra.algorithm as algo
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import copy
 
 # Ros imports
 import rospy
@@ -23,24 +24,32 @@ class ToppraTrajectory():
             'generate_toppra_trajectory', GenerateTrajectory, 
             self.generateToppraTrajectoryCallback)
 
+        self.raw_trajectory_pub = rospy.Publisher('toppra_raw_trajectory', 
+            JointTrajectory, queue_size=1)
+
+        self.raw_waypoints_pub = rospy.Publisher('toppra_raw_waypoints', 
+            JointTrajectory, queue_size=1)
+
     def run(self):
         # Nothing special, just waiting for service request
         rospy.spin()
 
     def generateToppraTrajectoryCallback(self, req):
-        print("Generating TOPP-RA trajectory.")
+        print (" ")
+        print ("Generating TOPP-RA trajectory.")
+        tstart = time.time()
         res = GenerateTrajectoryResponse()
         dof = len(req.waypoints.points[0].positions)
         n = len(req.waypoints.points)
 
         # If there is not enough waypoints to generate a trajectory return false
         if (n <= 1 or dof == 0):
-            print("You must provide at least 2 points to generate a valid trajectory.")
+            print ("You must provide at least 2 points to generate a valid trajectory.")
             res.trajectory.success = False
             return res
 
         # Generate trajectory.
-        # First set up waypoints. We know how many will be from n and dof.
+        # First set up waypoints. We know hom many will be from n and dof.
         way_pts = np.zeros([n, dof])
         # Next fill the waypoints with data from request.
         for i in range(0, n):
@@ -68,12 +77,22 @@ class ToppraTrajectory():
 
         # Retime the trajectory, only this step is necessary.
         t0 = time.time()
-        jnt_traj, aux_traj = instance.compute_trajectory(0, 0)
+        #### ROS-Noetic fix
+        #jnt_traj, aux_traj = instance.compute_trajectory(0, 0)
+        jnt_traj = instance.compute_trajectory()
+        ####
         #print("Parameterization time: {:} secs".format(time.time() - t0))
+
+        # Plot for debugging
 
         # Convert to JointTrajectory message
         res.trajectory = self.TOPPRA2JointTrajectory(jnt_traj, req.sampling_frequency)
         res.success = True
+        if len(req.waypoints.joint_names) != 0:
+            res.trajectory.joint_names = copy.deepcopy(req.waypoints.joint_names)
+        self.raw_trajectory_pub.publish(res.trajectory)
+        self.raw_waypoints_pub.publish(req.waypoints)
+        print ("Time elapsed: ", time.time()-tstart)
         return res
 
     def TOPPRA2JointTrajectory(self, jnt_traj, f):
@@ -109,8 +128,11 @@ class ToppraTrajectory():
             last_point.positions.append(qs_sample[n-1,i])
             last_point.velocities.append(0.0)
             last_point.accelerations.append(0.0)
-        last_point.time_from_start = rospy.Duration.from_sec((n-1)/f)
+        last_point.time_from_start = rospy.Duration.from_sec((n)/f)
         joint_trajectory.points.append(last_point)
+
+        for i in range(0, dof):
+            joint_trajectory.joint_names.append("joint"+str(i+1))
 
         return joint_trajectory
 
@@ -118,4 +140,3 @@ if __name__ == "__main__":
     rospy.init_node("generate_toppra_trajectory")
     generator = ToppraTrajectory()
     generator.run()
-

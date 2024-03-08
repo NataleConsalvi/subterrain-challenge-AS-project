@@ -28,9 +28,9 @@ class HelicalTrajectory():
         get_helix_points_service = rospy.ServiceProxy(
             "get_helix_points", GetHelixPoints)
 
-        trajectory_pub = rospy.Publisher('multi_dof_trajectory', 
+        trajectory_pub = rospy.Publisher('command/trajectory', 
             MultiDOFJointTrajectory, queue_size=1)
-        time.sleep(0.5)
+        time.sleep(2.5)
 
         # Set up helical trajectory
         helix_request = GetHelixPointsRequest()
@@ -39,7 +39,7 @@ class HelicalTrajectory():
         helix_request.x0 = -0.5
         helix_request.y0 = 0.0
         helix_request.z0 = 1.0
-        helix_request.zf = 2.5
+        helix_request.zf = 2.0
         helix_request.deltaZ = 0.05
 
         # Get the points
@@ -48,8 +48,8 @@ class HelicalTrajectory():
         # GetHelixPoints just returns the points. The dynamical part must be 
         # provided by the user.
         dof = len(helix_response.helix_points.points[0].positions)
-        helix_response.helix_points.points[0].velocities = [2.0]*dof
-        helix_response.helix_points.points[0].accelerations = [1.0]*dof
+        helix_response.helix_points.points[0].velocities = [1.2]*dof
+        helix_response.helix_points.points[0].accelerations = [0.7]*dof
 
         # Now call the trajectory generation service
         trajectory_request = GenerateTrajectoryRequest()
