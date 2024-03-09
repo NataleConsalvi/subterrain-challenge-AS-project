@@ -23,6 +23,7 @@ private:
 	// Topics from state machine
     ros::Subscriber received_state;
     int actual_state;   //Represents de actual state
+    bool first;
 
     geometry_msgs::Twist velocity;
     geometry_msgs::Twist acceleration;
@@ -33,7 +34,7 @@ private:
     
     tf::Vector3 actual_coordinates;
     tf::Vector3 previous_coordinates;
-    tf::Vector3 changed_coordinates;
+    tf::Vector3 position;
 
 public:
     //Constructor
@@ -46,6 +47,8 @@ public:
         ros::Time start(ros::Time::now());
 
         actual_state = 0;
+
+        first = true;
 
         desired_pose = tf::Transform::getIdentity();
 
@@ -70,10 +73,6 @@ public:
             switch(actual_state)
             {
                 case 1:
-                //CODE
-                    break;
-
-                case 2:
                 {
                     bool reachedcave = false;
                     ros::Rate loop_rate(500);
@@ -146,14 +145,16 @@ public:
                 }
                 break;
 
-                case 3:
+                case 2:
                 //CODE
                 break;
 
 
 
-                case 4:
+                case 3:
+                /*
                 {
+                     
                 velocity.linear.x = velocity.linear.y = 0;
                 velocity.linear.z = 2;
         		velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
@@ -173,7 +174,7 @@ public:
                             desired_pose.setOrigin(tf::Vector3(actual_coordinates.x(), actual_coordinates.y(), actual_coordinates.z() -1));
                             desired_pose.setRotation(landing_rotation);
                             publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);
-                        /*    
+                           
                         if(first){
                             previous_coordinates = actual_coordinates;
                             first=false;
@@ -198,13 +199,14 @@ public:
                                 ros::Duration(2.0).sleep();
                             }
                         }
-                        */
+                        
                     }
                 }
                 ROS_INFO_STREAM_ONCE("OUT WHILE LAND");
+                */
                 break;
 
-                case 5:
+                case 4:
                 //CODE
                 break;
             }
@@ -214,8 +216,39 @@ public:
 
 
   void onCurrentState(const nav_msgs::Odometry& cur_state){  
-     tf::Vector3 position(cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z);
-     actual_coordinates = position;      
+     tf::Vector3 droneposition(cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z);
+     position = droneposition;
+     if(actual_state==4){
+        tf::TransformBroadcaster br;
+        tf::Quaternion landing_rotation;
+        velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
+        velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
+        if(first){
+            previous_coordinates = position;
+            first=false;
+            desired_pose.setOrigin(tf::Vector3(cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z -0.2));
+            desired_pose.setRotation(landing_rotation);
+            publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);
+            ROS_INFO_STREAM_ONCE("FIRST LANDING ACTION");
+            //ros::Duration(2.0).sleep();
+        }
+        else{
+            if(previous_coordinates.x() == cur_state.pose.pose.position.x && 
+                previous_coordinates.y() == cur_state.pose.pose.position.y && 
+                previous_coordinates.z() == cur_state.pose.pose.position.z) {
+                actual_state = 5;
+                ROS_INFO_STREAM_ONCE("LANDED");
+                }
+            else{
+                previous_coordinates = position;
+                desired_pose.setOrigin(tf::Vector3(cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z -0.2));
+                desired_pose.setRotation(landing_rotation);
+                publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);
+                ROS_INFO_STREAM_ONCE("NOT LANDED. CONTINUE LANDING");
+                //ros::Duration(2.0).sleep();
+                }
+        }
+    }      
   }
   
   
