@@ -168,7 +168,7 @@ public:
 
         if (autonomous_check)
         {
-            mission_state = 3;
+            mission_state = 4;  //CHANGE TO 3 WHEN WE ARE ABLE TO LAND TE DRONE
 
             std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
             std::string source = "source devel/setup.bash";
@@ -184,7 +184,8 @@ public:
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
                                     + intoworkspace + " && " + source + " && " + command + "; exec bash'";
             
-            system(fullCommand.c_str());
+            // UNCOMMENT THE BELOW LINE WHEN WE ARE ABLE TO LAND THE DRONE
+            //system(fullCommand.c_str());
             ROS_INFO("Opened new terminal");
         }
     }
@@ -214,8 +215,8 @@ public:
     void landing_state()
     {
         mission_state_msgs.data = 4;
-        publish_state_message(mission_state_msgs.data);
-        //drone_state_pub.publish(mission_state_msgs);
+        //publish_state_message(mission_state_msgs.data);
+        drone_state_pub.publish(mission_state_msgs);
         ROS_INFO_STREAM_ONCE("autonomous_state end, landing");
         if (landed)
         {
