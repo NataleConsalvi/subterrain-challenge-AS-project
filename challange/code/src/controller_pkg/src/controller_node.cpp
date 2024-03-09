@@ -7,6 +7,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <mav_msgs/Actuators.h>
 #include <nav_msgs/Odometry.h>
+#include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <math.h>
 #include <std_msgs/Float64.h>
@@ -62,7 +63,7 @@ class controllerNode{
   //
   // ~~~~ begin solution
 
-  ros::Subscriber desired_state1, desired_state2, current_state;
+  ros::Subscriber desired_state, current_state, desired_state_2;
   ros::Publisher prop_speeds;
   ros::Timer timer;
 
@@ -129,8 +130,9 @@ public:
       //  - read the lab 3 handout to fnd the message type
       //
       // ~~~~ begin solution
-      //desired_state1 = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
-      desired_state2 = nh.subscribe("airsim_ros_node/exploration/goal", 1, &controllerNode::onDesiredState, this);
+      
+      desired_state = nh.subscribe("red/position_hold/trajectory", 100, &controllerNode::onDesiredState, this);
+      //desired_state_2 = nh.subscribe("/airsim_ros_node/visualization/waypoints", 100, &controllerNode::onDesiredState2, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);
@@ -231,6 +233,56 @@ public:
       //                                 end part 3
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   }
+
+//   void onDesiredState2(const trajectory_msgs::JointTrajectory& des_state_2) {
+//     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//     //  PART 3 | Objective: fill in xd, vd, ad, yawd
+//     // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+//     //
+//     // 3.1 Get the desired position, velocity and acceleration from the in-
+//     //     coming ROS message and fill in the class member variables xd, vd
+//     //     and ad accordingly. You can ignore the angular acceleration.
+//     //
+//     // Hint: use "v << vx, vy, vz;" to fill in a vector with Eigen.
+//     //
+//     // ~~~~ begin solution
+
+//     // Assuming that the trajectory has at least one point
+//     if (!des_state_2.points.empty()) {
+//         // Position
+//         xd << des_state_2.points[0].positions[0], des_state_2.points[0].positions[1], des_state_2.points[0].positions[2];
+
+//         // Velocities
+//         vd << des_state_2.points[0].velocities[0], des_state_2.points[0].velocities[1], des_state_2.points[0].velocities[2];
+
+//         // Accelerations
+//         ad << des_state_2.points[0].accelerations[0], des_state_2.points[0].accelerations[1], des_state_2.points[0].accelerations[2];
+//     }
+//     // ~~~~ end solution
+//     //
+//     // 3.2 Extract the yaw component from the quaternion in the incoming ROS
+//     //     message and store in the yawd class member variable
+//     //
+//     //  Hints:
+//     //    - use the methods tf::getYaw(...)
+//     //    - maybe you want to use also tf::quaternionMsgToTF(...)
+//     //
+//     // ~~~~ begin solution
+
+//     // Assuming that the trajectory has at least one point
+//     if (!des_state_2.points.empty()) {
+//         tf::Quaternion q;
+//         tf::quaternionMsgToTF(des_state_2.points[0].orientations, q);
+//         yawd = tf::getYaw(q);
+//     }
+
+//     // ~~~~ end solution
+//     //
+//     // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+//     //                                 end part 3
+//     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// }
+
 
   void onCurrentState(const nav_msgs::Odometry& cur_state){
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

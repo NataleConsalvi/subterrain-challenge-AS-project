@@ -1,6 +1,6 @@
 <launch>
   <arg name="rate" default="10" />
-  <arg name="namespace" default="nats_drone" />
+  <arg name="namespace" default="$(env UAV_NAMESPACE)" />
   <arg name="slam_ns" default="map"/>
 
   <group ns="$(arg namespace)">

@@ -7,8 +7,6 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 set(octomap_DIR "/opt/ros/noetic/share/octomap")
 
-
-
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
@@ -39,12 +37,6 @@ find_package(octomap 1.9 REQUIRED)
 add_definitions(-DOCTOMAP_NODEBUGOUT)
 find_package(cmake_modules REQUIRED)
 
-generate_messages(
-    DEPENDENCIES
-    std_msgs
-    geographic_msgs
-)
-
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES frontier_exploration_3d
@@ -71,7 +63,8 @@ set(LINK_LIBS
 
 add_library(frontier_exploration_3d 
     src/FrontierServer.cpp
-    src/OctomapLUT.cpp)
+    src/OctomapLUT.cpp
+)
 target_link_libraries(frontier_exploration_3d ${LINK_LIBS} yaml-cpp)
 
 add_executable(frontier_server_node src/FrontierServerNode.cpp src/OctomapServer.cpp src/BestFrontier.cpp)
