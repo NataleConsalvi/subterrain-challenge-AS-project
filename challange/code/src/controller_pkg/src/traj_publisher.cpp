@@ -23,6 +23,7 @@ private:
 	// Topics from state machine
     ros::Subscriber received_state;
     int actual_state;   //Represents de actual state
+    bool first;
 
     geometry_msgs::Twist velocity;
     geometry_msgs::Twist acceleration;
@@ -33,7 +34,7 @@ private:
     
     tf::Vector3 actual_coordinates;
     tf::Vector3 previous_coordinates;
-    tf::Vector3 changed_coordinates;
+    tf::Vector3 position;
 
 public:
     //Constructor
@@ -46,6 +47,8 @@ public:
         ros::Time start(ros::Time::now());
 
         actual_state = 0;
+        
+        first = true;
 
         desired_pose = tf::Transform::getIdentity();
 
@@ -70,10 +73,6 @@ public:
             switch(actual_state)
             {
                 case 1:
-                //CODE
-                    break;
-
-                case 2:
                 {
                     bool reachedcave = false;
                     ros::Rate loop_rate(500);
@@ -146,29 +145,57 @@ public:
                 }
                 break;
 
-                case 3:
+                case 2:
                 //CODE
                 break;
 
 
 
-                case 4:
+                case 3:
                 {
-                velocity.linear.x = velocity.linear.y = 0;
-                velocity.linear.z = 2;
-        		velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
-        
-       	        acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
-        		acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
-        		
+                
                 bool landed = false;
-                bool first = true;
-
-                //tf::Vector3 land_target(actual_coordinates.x(), actual_coordinates.y(), -1000);
+                ros::Rate loop_rate(500);
+                double landing_duration = 5;                  
+                double target_height_land = -10;
+               
+                tf::Vector3 land_target(actual_coordinates.x(), actual_coordinates.y(), -1000); 
+         
+                ros::Time start(ros::Time::now());
+                
+                while(!landed)
+                    {
+                        double t = (ros::Time::now() - start).toSec();
+                        
+                      
+                        if (t < landing_duration) 
+                        {
+   
+                        desired_pose.setOrigin(tf::Vector3(actual_coordinates.x(), actual_coordinates.y(), actual_coordinates.z() - t / landing_duration * (actual_coordinates.z()-target_height_land)));
+                         
+                        publishDesiredState(desired_pose, velocity, acceleration, desired_state_pub, br);        
+                        }   
+                        
+                       
+                        
+                        if ( t > landing_duration)
+                        {
+                            landed = true;
+                            ROS_INFO("LANDED");
+                        }
+                        
+                        ros::spinOnce();
+                        loop_rate.sleep();
+                        //++count;
+                    }
+                }
+                break;	
+             
+/*
                        
                 while (!landed){
-                        tf::Quaternion landing_rotation;
-                        landing_rotation.setRPY(0, 0, 0);
+                       // tf::Quaternion landing_rotation;
+                       // landing_rotation.setRPY(0, 0, 0);
 
                             desired_pose.setOrigin(tf::Vector3(actual_coordinates.x(), actual_coordinates.y(), actual_coordinates.z() -1));
                             desired_pose.setRotation(landing_rotation);
@@ -198,13 +225,16 @@ public:
                                 ros::Duration(2.0).sleep();
                             }
                         }
-                        */
+                        
                     }
                 }
                 ROS_INFO_STREAM_ONCE("OUT WHILE LAND");
                 break;
 
-                case 5:
+
+*/
+
+                case 4:
                 //CODE
                 break;
             }
