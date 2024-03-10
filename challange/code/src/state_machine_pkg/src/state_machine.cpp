@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <ros/package.h>
+#include "visualization_msgs/MarkerArray.h"
 
 
 
@@ -19,6 +20,8 @@ class State_Machine{
     ros::NodeHandle nh_relative_;
 
     ros::Subscriber desired_state_subscriber;
+
+    ros::Subscriber detected_lights;
 
     //Timer controll the main node
     ros::Timer timermission;
@@ -37,7 +40,6 @@ class State_Machine{
 
     // True when server send the massage
     bool landing_check;
-    int founded_lights;
 
     // For checking landed
     bool landed;
@@ -60,7 +62,6 @@ public:
         //launch_flag = false;
         autonomous_check = false;
         landing_check = false;
-        founded_lights = 0;
         landed = false;
 
         call_autonomous_state_service = true;
@@ -73,6 +74,9 @@ public:
 
         // Subscribe to the desired state topic
         desired_state_subscriber = nh_.subscribe("/airsim_ros_node/desired_state2", 1, &State_Machine::desired_state_callback, this);
+
+        detected_lights = nh_.subscribe("/perception_params/object_vis_out_topic", 10, &State_Machine::autonomous_finished, this);
+        
     }
 
     void state_machine_loop(const ros::TimerEvent& t){
@@ -106,10 +110,9 @@ public:
 
     }
 
-    void autonomous_finished(const trajectory_msgs::MultiDOFJointTrajectoryPoint& desired_state)
+    void autonomous_finished(const visualization_msgs::MarkerArray::ConstPtr& msg)
     {
-        founded_lights++;
-        if(founded_lights>=4)
+        if (msg->markers.size() == 4)
         {
             landing_check = true;
         }
@@ -188,4 +191,3 @@ int main(int argc, char* argv[])
 
     ros::spin();
 }
-
