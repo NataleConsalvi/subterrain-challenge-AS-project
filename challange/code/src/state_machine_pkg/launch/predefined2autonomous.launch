@@ -3,6 +3,6 @@
     <include file="$(find uav_frontier_exploration_3d)/launch/frontier_server.launch" />
 
     <!-- Launch the perception_pipeline node -->
-    <!-- include file="$(find your_package)/launch/pipeline_node/perception_pipeline.launch" /-->
+    <include file="$(find your_package)/launch/pipeline_node/perception_pipeline.launch" />
 </launch>
 

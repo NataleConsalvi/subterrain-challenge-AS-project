@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf_conversions
   roslaunch
+  visualization_msgs
 )
 
 find_package(Eigen3)
@@ -30,6 +31,7 @@ catkin_package(
     tf_conversions
     roslaunch
     roslib
+    visualization_msgs
 )
 
 #add_service_files(
