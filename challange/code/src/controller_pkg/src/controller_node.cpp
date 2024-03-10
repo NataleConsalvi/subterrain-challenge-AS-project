@@ -62,7 +62,7 @@ class controllerNode{
   //
   // ~~~~ begin solution
 
-  ros::Subscriber desired_state, current_state;
+  ros::Subscriber desired_state1, desired_state2, current_state;
   ros::Publisher prop_speeds;
   ros::Timer timer;
 
@@ -129,8 +129,8 @@ public:
       //  - read the lab 3 handout to fnd the message type
       //
       // ~~~~ begin solution
-      
-      desired_state = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
+      //desired_state1 = nh.subscribe("desired_state", 1, &controllerNode::onDesiredState, this);
+      desired_state2 = nh.subscribe("airsim_ros_node/desired_state2", 1, &controllerNode::onDesiredState, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);
