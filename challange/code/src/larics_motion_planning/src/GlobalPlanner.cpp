@@ -46,13 +46,6 @@ bool GlobalPlanner::configureFromFile(string config_filename)
     cout << "State validity checker type is: " << state_validity_checker_type_ << endl;
   }
   else if (state_validity_checker_type_ == "uav_and_wp_manipulator"){
-    // First set up kinematics for wp manipulator.
-    kinematics_interface_ = make_shared<WpManipulatorKinematics>(
-      config["global_planner"]["kinematics_config_file"].as<string>());
-    // Set up validity checker for uav and wp manipulator
-    state_validity_checker_interface_ = make_shared<UavWpManipulatorStateValidityChecker>(
-      config["global_planner"]["state_validity_checker_config_file"].as<string>(),
-      map_interface_, kinematics_interface_);
     cout << "State validity checker type is: uav_and_wp_manipulator" << endl;
   }
   else{
@@ -189,11 +182,6 @@ Trajectory GlobalPlanner::getTrajectory()
 Eigen::MatrixXd GlobalPlanner::getRobotStatePoints(Eigen::VectorXd state)
 {
   return state_validity_checker_interface_->generateValidityPoints(state);
-}
-
-shared_ptr<KinematicsInterface> GlobalPlanner::getKinematicsInterface()
-{
-  return kinematics_interface_;
 }
 
 shared_ptr<MapInterface> GlobalPlanner::getMapInterface()

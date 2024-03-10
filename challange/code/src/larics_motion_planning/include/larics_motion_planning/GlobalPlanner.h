@@ -7,8 +7,8 @@
 #include <larics_motion_planning/MotionPlanningDatatypes.h>
 #include <larics_motion_planning/MapInterface.h>
 #include <larics_motion_planning/OctomapMap.h>
-#include <larics_motion_planning/KinematicsInterface.h>
-#include <larics_motion_planning/WpManipulatorKinematics.h>
+
+
 #include <larics_motion_planning/PathPlanningInterface.h>
 #include <larics_motion_planning/RrtPathPlanner.h>
 #include <larics_motion_planning/TrajectoryInterface.h>
@@ -16,7 +16,6 @@
 #include <larics_motion_planning/StateValidityCheckerInterface.h>
 #include <larics_motion_planning/PointStateValidityChecker.h>
 #include <larics_motion_planning/SimpleStateValidityCheckers.h>
-#include <larics_motion_planning/UavWpManipulatorStateValidityChecker.h>
 
 #include <eigen3/Eigen/Eigen>
 
@@ -85,9 +84,6 @@ class GlobalPlanner
     /// \return State Points
     Eigen::MatrixXd getRobotStatePoints(Eigen::VectorXd state);
 
-    /// \brief Returns kinematics interface used in planner.
-    /// \return Shared pointer to kinematics interface.
-    shared_ptr<KinematicsInterface> getKinematicsInterface();
 
     /// \brief Returns map interface used in planner
     /// \return Shared pointer to map interface.
@@ -102,7 +98,6 @@ class GlobalPlanner
     shared_ptr<TrajectoryInterface> trajectory_interface_;
     shared_ptr<StateValidityCheckerInterface> state_validity_checker_interface_;
     shared_ptr<PathPlanningInterface> path_planner_interface_;
-    shared_ptr<KinematicsInterface> kinematics_interface_;
 
     string state_validity_checker_type_, config_filename_;
 

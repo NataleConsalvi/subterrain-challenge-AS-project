@@ -81,10 +81,6 @@ class GlobalPlannerRosInterface
       joint_trajectory_pub_, parabolic_airdrop_info_pub_;
 
     // Empty service
-    ros::ServiceServer empty_service_server_;
-    ros::ServiceClient execute_trajectory_client_;
-    bool emptyCallback(std_srvs::Empty::Request &req, 
-      std_srvs::Empty::Response &res);
 
     // Cartesian trajectory service
     ros::ServiceServer cartesian_trajectory_server_;
