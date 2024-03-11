@@ -217,6 +217,9 @@ class LightDetector(object):
             if self.publish_overlayed_rgb_img:
                 self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
 
+            object_header = data.header
+            bb_array = Detection3DArray()
+            bb_array.detections = self.detected_lights
 
             if self.mask is not None and np.sum(self)!=0:
   
@@ -226,63 +229,63 @@ class LightDetector(object):
                 res_mask = (self.mask[v,u] > 0) & (v > 0) & (u > 0) 
 
                 object_pcl_arr = pcl_array[res_mask]
+                if len(object_pcl_arr) > 0:
+                    pcl_cloud = pcl.PointCloud(object_pcl_arr.astype(np.float32))
+                    # Applying outlier removal method
+                    filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud, 
+                        self.mean_k,self.thresh)                                            
+                    filtered_np_cloud = np.asarray(filtered_pcl_cloud)
 
-                pcl_cloud = pcl.PointCloud(object_pcl_arr.astype(np.float32))
-                # Applying outlier removal method
-                filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud, 
-                    self.mean_k,self.thresh)                                            
-                filtered_np_cloud = np.asarray(filtered_pcl_cloud)
+                    # Convert pcl_array to a structured array with named fields
+                    structured_array = np.zeros((filtered_np_cloud.shape[0],), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
+                    structured_array['x'] = filtered_np_cloud[:, 0]
+                    structured_array['y'] = filtered_np_cloud[:, 1]
+                    structured_array['z'] = filtered_np_cloud[:, 2]
 
-                # Convert pcl_array to a structured array with named fields
-                structured_array = np.zeros((filtered_np_cloud.shape[0],), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
-                structured_array['x'] = filtered_np_cloud[:, 0]
-                structured_array['y'] = filtered_np_cloud[:, 1]
-                structured_array['z'] = filtered_np_cloud[:, 2]
+                    object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
 
-                object_pcl_msg = ros_numpy.point_cloud2.array_to_pointcloud2(structured_array, stamp = data.header.stamp, frame_id = data.header.frame_id)
-
-                pcl_header = data.header
-                # Transforms the filtered point cloud to a world coordinate frame
-                if self.pub_in_world_coords:
-                    try:
-                        transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
-                    except tf2_ros.LookupException as e:
-                        rospy.logerr(e)
-                        return
-
-                    object_pcl_cloud = do_transform_cloud(object_pcl_msg, transform)
-                    filtered_np_cloud = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(object_pcl_cloud)
-                    pcl_header.frame_id = 'world'
-
-                if self.publish_object_pcl:
+                    # Transforms the filtered point cloud to a world coordinate frame
                     if self.pub_in_world_coords:
-                        object_pcl_msg = object_pcl_cloud
-                        object_pcl_msg.header = pcl_header
-                    self.object_pcl_pub.publish(object_pcl_msg)
+                        try:
+                            transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
+                        except tf2_ros.LookupException as e:
+                            rospy.logerr(e)
+                            return
 
-                if self.publish_object_bb or self.publish_object_vis_markers:   
-                    bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
+                        object_pcl_cloud = do_transform_cloud(object_pcl_msg, transform)
+                        filtered_np_cloud = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(object_pcl_cloud)
+                        object_header.frame_id = 'world'
 
-                    if self.pub_in_world_coords:
-                        bb_array.detections = self.compare_add_bbs(bb_array)
+                    if self.publish_object_pcl:
+                        if self.pub_in_world_coords:
+                            object_pcl_msg = object_pcl_cloud
+                            object_pcl_msg.header = object_header
+                        self.object_pcl_pub.publish(object_pcl_msg)
 
-                    bb_array.header = pcl_header
-                    self.object_bb_pub.publish(bb_array)
+                    if self.publish_object_bb or self.publish_object_vis_markers:   
+                        bb_array = self.create_3d_bb_from_pcl(filtered_np_cloud)
 
-                if self.publish_object_vis_markers:
-                    markers_array = self.create_marker_from_bb(bb_array)
-                    self.object_marker_pub.publish(markers_array)
-            else:
-                bb_array = Detection3DArray()
-                pcl_header.frame_id = 'world'
-                bb_array.header = pcl_header
-                bb_array.detections = self.detected_lights
-                if self.publish_object_bb or self.publish_object_vis_markers:  
-                    self.object_bb_pub.publish(bb_array)
+                        if self.pub_in_world_coords:
+                            bb_array.detections = self.compare_add_bbs(bb_array)
 
-                if self.publish_object_vis_markers:
-                    markers_array = self.create_marker_from_bb(bb_array)
-                    self.object_marker_pub.publish(markers_array)
+                #     bb_array.header = object_header
+                #     self.object_bb_pub.publish(bb_array)
+
+                # if self.publish_object_vis_markers:
+                #     markers_array = self.create_marker_from_bb(bb_array)
+                #     self.object_marker_pub.publish(markers_array)
+
+
+            if self.pub_in_world_coords:
+                object_header.frame_id = 'world'
+            bb_array.header = object_header
+
+            if self.publish_object_bb or self.publish_object_vis_markers:  
+                self.object_bb_pub.publish(bb_array)
+
+            if self.publish_object_vis_markers:
+                markers_array = self.create_marker_from_bb(bb_array)
+                self.object_marker_pub.publish(markers_array)
 
         except Exception as e:
             rospy.logerr(e)
@@ -298,6 +301,10 @@ class LightDetector(object):
                 for old_detection in self.detected_lights:
                     if self.calculate_distance(new_detection.bbox, old_detection.bbox) < 1:
                         far = False
+                        # n_bb_size = new_detection.bbox.size
+                        # o_bb_size = old_detection.bbox.size
+                        # if (n_bb_size.x * n_bb_size.y * n_bb_size.z) > (o_bb_size.x * o_bb_size.y * o_bb_size.z):
+                        #     old_detection.bbox = new_detection.bbox
                         break
                 if far:
                     self.detected_lights.append(new_detection)
