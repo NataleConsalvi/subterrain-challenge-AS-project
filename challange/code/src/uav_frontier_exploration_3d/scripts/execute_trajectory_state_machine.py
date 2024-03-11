@@ -52,6 +52,7 @@ class UavExplorationSm:
         self.trajectory_pub = rospy.Publisher('joint_trajectory', JointTrajectory, queue_size=1)
         self.point_reached_pub = rospy.Publisher('exploration/point_reached', Bool, queue_size=1)
         self.rotation_publisher = rospy.Publisher('rotation360', MultiDOFJointTrajectoryPoint, queue_size=1)
+        self.trajectory_ready = rospy.Publisher('ready_trajectory', Bool, queue_size=1)
 
         # Initialize services
         print("Waiting for service multi_dof_trajectory.")
@@ -148,6 +149,7 @@ class UavExplorationSm:
                     # If the plan was successful then execute it.
                     else:
                         self.trajectory_pub.publish(response.trajectory)
+                        self.trajectory_ready.publish(True)
                         self.state = "execute"
                 # if trajectory is not OK, point is reached and go to "start" state
                 else:

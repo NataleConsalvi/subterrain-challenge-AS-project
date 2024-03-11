@@ -84,7 +84,7 @@ path_planner:
     # Bounds are defined by
     # bounds: [[[-15, 9], [-4, 45], [0.0, 10.0], [-3.15, 3.15]]] 
     # bounds: [[[-22, 8], [-13, 29], [0.5, 4.0], [-3.15, 3.15]]]
-    bounds: [[[-900.0, -319.0], [-30.0, 30.0], [-30.0, 30.0], [-3.15, 3.15]]]
+    bounds: [[[-1200.0, -319.0], [-30.0, 30.0], [-40.0, 40.0], [-3.15, 3.15]]]
 
   # RRT* parameter set
 
@@ -189,7 +189,7 @@ toppra_trajectory:
 
 state_validity_checker:
   # State validity checker examples. Note that type can also be point.
-  type: "sphere"
+  type: "point"
 
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.

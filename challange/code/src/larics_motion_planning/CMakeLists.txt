@@ -102,11 +102,6 @@ target_link_libraries(larics_motion_planning trajectory map path_planning
   visualization global_planner ${catkin_LIBRARIES} ${Eigen_LIBRARIES} 
   yaml-cpp)
 
-add_executable(testing_node src/test.cpp)
-target_link_libraries(testing_node larics_motion_planning)
-
 add_executable(global_planner_node src/global_planner_node)
 target_link_libraries(global_planner_node larics_motion_planning)
 
-add_executable(binvox2bt src/binvox2bt.cpp)
-target_link_libraries(binvox2bt larics_motion_planning)
