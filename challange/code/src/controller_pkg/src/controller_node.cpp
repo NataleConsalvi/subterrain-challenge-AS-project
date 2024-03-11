@@ -132,7 +132,7 @@ public:
       // ~~~~ begin solution
       
       desired_state = nh.subscribe("red/position_hold/trajectory", 100, &controllerNode::onDesiredState, this);
-      //desired_state_2 = nh.subscribe("/airsim_ros_node/visualization/waypoints", 100, &controllerNode::onDesiredState2, this);
+      desired_state_2 = nh.subscribe("red/rotation360", 1, &controllerNode::onDesiredState, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);

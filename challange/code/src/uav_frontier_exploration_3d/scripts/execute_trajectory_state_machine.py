@@ -5,7 +5,7 @@ __author__ = 'abatinovic'
 import rospy
 import math
 import time
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Twist
 from std_msgs.msg import Float64, Empty, Int32, Float32, String, Bool
 from nav_msgs.msg import Odometry
 from std_srvs.srv import SetBool, SetBoolResponse, SetBoolRequest
@@ -34,7 +34,7 @@ class UavExplorationSm:
         self.r_trajectory = rospy.get_param('radius_trajectory_executed', 0.5)
         # Rate of the state machine.
         self.rate = rospy.get_param('rate', 10)
-        # How long do we collect feedback and store it in array. Checks for execution
+        # How long do we collect feedback and storTwiste it in array. Checks for execution
         # rely on this parameter because they check through the last x 
         # seconds to determine the next state.
         self.feedback_collection_time = rospy.get_param('feedback_collection_time', 1.0)
@@ -51,6 +51,7 @@ class UavExplorationSm:
         self.state_pub = rospy.Publisher('exploration/current_state', String, queue_size=1, latch=True)
         self.trajectory_pub = rospy.Publisher('joint_trajectory', JointTrajectory, queue_size=1)
         self.point_reached_pub = rospy.Publisher('exploration/point_reached', Bool, queue_size=1)
+        self.rotation_publisher = rospy.Publisher('rotation360', MultiDOFJointTrajectoryPoint, queue_size=1)
 
         # Initialize services
         print("Waiting for service multi_dof_trajectory.")
@@ -61,7 +62,7 @@ class UavExplorationSm:
 
         # Initialize subscribers
         rospy.Subscriber('exploration/goal', PoseStamped, self.targetPointCallback, queue_size=1)
-        rospy.Subscriber('carrot/trajectory', MultiDOFJointTrajectoryPoint, self.referenceCallback, queue_size=1)
+        rospy.Subscriber('carrot/trajectory', MultiDOFJointTrajectoryPoint, self.referenceCallback, queue_size=10)
         rospy.Subscriber('/current_state_est', Odometry, self.globalPositionCallback, queue_size=1)
         rospy.Subscriber('executing_trajectory', Int32, self.executingTrajectoryCallback, queue_size=1)
 
@@ -182,7 +183,6 @@ class UavExplorationSm:
                     self.state_previous = "end"
                     self.state_pub.publish(self.state)
                     self.point_reached_pub.publish(True)
-
                 time.sleep(0.05)
                 # TODO: publish
                 self.state = "start"
@@ -216,8 +216,11 @@ class UavExplorationSm:
                 self.feedback_array_index = 0
 
     def referenceCallback(self, msg):
-        print("QUI DI SOVREBBE FAR QUALCOSA.")
+        print("Received current position from /current_state_est.")
         self.current_reference = msg
+        time.sleep(0.1)
+        #self.rotation360()
+        #rospy.sleep(math.pi / (3 * 0.5))
 
     def executingTrajectoryCallback(self, msg):
         self.executing_trajectory = msg.data
@@ -228,6 +231,48 @@ class UavExplorationSm:
         q2 = quaternion.y
         q3 = quaternion.z
         return math.atan2(2.0*(q0*q3 + q1*q2), 1.0-2.0*(q2*q2 + q3*q3))
+
+    def rotation360(self):
+        print("---Start rotation---")
+        
+        velocity = Twist()
+        acceleration = Twist()
+
+        num_steps = 100  # You can adjust this number as needed
+        rotation_rate = 0.5  # Adjust the rotation rate as needed
+        multijointmsg = copy.deepcopy(self.current_reference)
+        original_yaw = self.quaternion2Yaw(multijointmsg.transforms[0].rotation)
+
+        velocity.linear.x = velocity.linear.y = velocity.linear.z = 0
+        velocity.angular.x = velocity.angular.y = velocity.angular.z = 0
+
+        acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0
+        acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0
+
+        if not multijointmsg.velocities:
+            multijointmsg.velocities.append(velocity)
+
+        if not multijointmsg.accelerations:
+            multijointmsg.accelerations.append(acceleration)
+
+        for step in range(num_steps + 1):
+            # Genera una rotazione attorno all'asse z
+            yaw = original_yaw + math.pi / 3 * step / num_steps
+            # Imposta l'orientazione con la rotazione attuale
+            multijointmsg.transforms[0].rotation.z = math.sin(yaw / 2)
+            multijointmsg.transforms[0].rotation.w = math.cos(yaw / 2)
+
+            # Imposta la velocità e l'accelerazione
+            multijointmsg.velocities[0].angular.z = rotation_rate
+            multijointmsg.accelerations[0].angular.z = 0
+
+            # Pubblica il messaggio di traiettoria
+            self.rotation_publisher.publish(multijointmsg)
+            
+            # Attendi per una breve durata per controllare il rate di rotazione
+            rospy.sleep(0.1)
+
+        print("---Finish rotation---")
 
     def checkTrajectoryExecuted(self):
         # Here we check if the UAV's has been within some radius from the target

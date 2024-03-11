@@ -18,8 +18,8 @@ namespace frontier_server
 		private_nh.param("exploration_config_filename", m_configFilename, m_configFilename);
 		configureFromFile(m_configFilename);
 
-		//cout.open("/log_frontier.txt");
-		cout << "This is a log file for 3D-Frontier" << endl;
+		m_logfile.open("/log_frontier.txt");
+		m_logfile << "This is a log file for 3D-Frontier" << endl;
 
 		// Initialize publishers
 		m_bestFrontierPub = m_nh.advertise<
@@ -31,6 +31,8 @@ namespace frontier_server
 		m_uavGoalPub = m_nh.advertise<
 			geometry_msgs::PoseStamped>("exploration/goal", 1, false);
 		m_pubEsmState = m_nh.advertise<std_msgs::Int32>("exploration/state", 1);
+
+		rotation_360_pub = m_nh.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("rotation360", 1, false);
 
 		// Initialize subscribers
 		m_pointReachedSub = m_nh.subscribe("point_reached", 1, 
@@ -83,7 +85,7 @@ namespace frontier_server
 	{
 		ros::WallTime startTime = ros::WallTime::now();
 		KeySet globalFrontierCells;
-		// cout << "findFrontier" << endl;
+		// m_logfile << "findFrontier" << endl;
 		bool unknownCellFlag {false};
 		bool freeCellFlag {false};
 		std::vector<octomap::point3d> changedCellNeighbor;
@@ -138,7 +140,7 @@ namespace frontier_server
 	
 		cout << "Number of frontiers:" << frontierSize << endl;
 		double total_time = (ros::WallTime::now() - startTime).toSec();
-		cout << "findFrontier - used total: "<< total_time << " sec" <<endl;
+		m_logfile << "findFrontier - used total: "<< total_time << " sec" <<endl;
 		return globalFrontierCells;
 	}
 
@@ -202,12 +204,12 @@ namespace frontier_server
 		cout << "Number of global frontiers after:" << frontierSize << endl;
 
 		double total_time = (ros::WallTime::now() - startTime).toSec();
-		cout << "updateGlobalFrontier - used total: "<< total_time << " sec" <<endl;
+		m_logfile << "updateGlobalFrontier - used total: "<< total_time << " sec" <<endl;
 	}
 
 	void FrontierServer::searchForParentsAndPublish()
   {
-    // cout << "searchForParents" << endl;
+    // m_logfile << "searchForParents" << endl;
 		ros::WallTime startTime = ros::WallTime::now();
 		// Search in globalFrontierCells after update
     for(KeySet::iterator iter = m_globalFrontierCellsUpdated.begin(), end = m_globalFrontierCellsUpdated.end(); iter != end; ++iter)
@@ -242,13 +244,13 @@ namespace frontier_server
 		cout << "FrontierServer - parents number: " << counter << endl;
 		cout << "number of parents: " << counter << endl;
 		double total_time = (ros::WallTime::now() - startTime).toSec();
-		cout << "SearchForParents - used total: "<< total_time << " sec" <<endl;
+		m_logfile << "SearchForParents - used total: "<< total_time << " sec" <<endl;
 		publishParentFrontier();
   }
 
 	void FrontierServer::clusterFrontierAndPublish()
 	{
-		// cout << "clusterFrontierAndPublish" << endl;
+		// m_logfile << "clusterFrontierAndPublish" << endl;
 		ros::WallTime startTime_evaluation = ros::WallTime::now();
 		m_clusteredCells.clear();
 		
@@ -270,7 +272,7 @@ namespace frontier_server
 		cout << "cluster_size: " << m_clusteredCells.size() << endl;
 		// cout << "cluster_size: " << m_clusteredCells.size() << endl;
 		double total_time_evaluation = (ros::WallTime::now() - startTime_evaluation).toSec();
-		cout << "clusterFrontier used total: " << total_time_evaluation << " sec" << endl;
+		m_logfile << "clusterFrontier used total: " << total_time_evaluation << " sec" << endl;
 		checkClusteredCells();
 		publishClusteredFrontier();
 	}
@@ -309,7 +311,7 @@ namespace frontier_server
 				m_clusteredCellsUpdated.insert(*iter);
 			}
 		}
-		cout << "Delete candidates num: " << deletedNum << endl;
+		m_logfile << "Delete candidates num: " << deletedNum << endl;
 	}
 
 	bool FrontierServer::isPointAlreadyAssigned(point3d point)
@@ -387,6 +389,79 @@ namespace frontier_server
 		m_invalidParentCells.insert(invalidCellKey);
 	}
 
+	double FrontierServer::quaternion2Yaw(const geometry_msgs::Quaternion& quaternion)
+	{
+		double q0 = quaternion.w;
+		double q1 = quaternion.x;
+		double q2 = quaternion.y;
+		double q3 = quaternion.z;
+
+		return std::atan2(2.0 * (q0 * q3 + q1 * q2), 1.0 - 2.0 * (q2 * q2 + q3 * q3));
+	}
+
+	void FrontierServer::rotation360(geometry_msgs::Pose msg)
+	{
+		cout << "---Start rotation z---" << endl;
+		geometry_msgs::Twist velocity;
+    	geometry_msgs::Twist acceleration;
+		trajectory_msgs::MultiDOFJointTrajectoryPoint multijointmsg;
+
+		const int num_steps = 20;  // You can adjust this number as needed
+    	const double rotation_rate = 1;  // Adjust the rotation rate as needed
+
+    	multijointmsg.transforms.resize(1);
+    	multijointmsg.transforms[0].translation.x = msg.position.x;
+    	multijointmsg.transforms[0].translation.y = msg.position.y;
+    	multijointmsg.transforms[0].translation.z = msg.position.z;
+    	multijointmsg.transforms[0].rotation.x = msg.orientation.x;
+    	multijointmsg.transforms[0].rotation.y = msg.orientation.y;
+    	multijointmsg.transforms[0].rotation.z = msg.orientation.z;
+    	multijointmsg.transforms[0].rotation.w = msg.orientation.w;
+
+		const double original_yaw = quaternion2Yaw(multijointmsg.transforms[0].rotation);
+
+		velocity.linear.x = velocity.linear.y = velocity.linear.z = 0;
+    	velocity.angular.x = velocity.angular.y = velocity.angular.z = 0;
+       
+    	acceleration.linear.x = acceleration.linear.y = acceleration.linear.z = 0;
+    	acceleration.angular.x = acceleration.angular.y = acceleration.angular.z = 0;
+        
+    	multijointmsg.velocities.resize(1);
+    	multijointmsg.velocities[0] = velocity;
+    	multijointmsg.accelerations.resize(1);
+    	multijointmsg.accelerations[0] = acceleration;
+
+		for (int step = 0; step <= num_steps; ++step)
+		{
+			// Genera una rotazione attorno all'asse z
+			double yaw = original_yaw + 2*M_PI * step / num_steps;
+
+			// Imposta l'orientazione con la rotazione attuale
+			multijointmsg.transforms[0].rotation.z = sin(yaw / 2);
+			multijointmsg.transforms[0].rotation.w = cos(yaw / 2);
+
+			// Imposta la velocità e l'accelerazione
+			multijointmsg.velocities[0].angular.z = rotation_rate;
+			multijointmsg.accelerations[0].angular.z = 0;
+
+			// Pubblica il messaggio di traiettoria
+			rotation_360_pub.publish(multijointmsg);
+			
+			// Attendi per una breve durata per controllare il rate di rotazione
+        	usleep(300000 / m_rate);
+
+			m_octomapServer.runDefault();
+			m_octomapServer.publishVolume();
+			this->m_octree = m_octomapServer.getOcTree();	
+			// Get changed cells
+			this->m_changedCells = m_octomapServer.getChangedCells();
+			usleep(300000 / m_rate);
+		}
+		cout << "---Finish rotation z---" << endl;
+
+		usleep(200000 / m_rate);
+	}
+
 	void FrontierServer::setStateAndPublish(ExplorationState state)
 	{
 		m_currentState = state;
@@ -416,9 +491,11 @@ namespace frontier_server
 					break;
 
 				case ExplorationState::CHECKFORFRONTIERS:
+					m_uavCurrentPose = m_octomapServer.getCurrentUAVPosition();
+					rotation360(m_uavCurrentPose);
+					//ros::Duration(4*M_PI/(3*1)).sleep();
 					m_octomapServer.runDefault();
 					m_octomapServer.publishVolume();
-					m_uavCurrentPose = m_octomapServer.getCurrentUAVPosition();
 					if(!m_currentGoalReached)
 						ROS_WARN_STREAM_THROTTLE(3.0,
 						m_bestFrontierPoint.x() << " " << m_bestFrontierPoint.y() << " " 
@@ -460,14 +537,14 @@ namespace frontier_server
 							m_bestFrontierServer.bestFrontierInfGain(m_octree, currentPoint3d, m_clusteredCellsUpdated);
 					// m_bestFrontierPoint = 
 					// 	m_bestFrontierServer.closestFrontier(m_octree, currentPoint3d, m_clusteredCellsUpdated);
-					cout << "Best frontier: " << m_bestFrontierPoint << endl;
+					m_logfile << "Best frontier: " << m_bestFrontierPoint << endl;
 					
 					m_allUAVGoals.push_back(m_bestFrontierPoint);
 					cout << "Best frontier: " << m_bestFrontierPoint << endl;
 					publishBestFrontier();
 					publishUAVGoal(m_bestFrontierPoint);
 					ros::Duration(0.05).sleep();
-					setStateAndPublish(ExplorationState::CHECKFORFRONTIERS);
+					setStateAndPublish(ExplorationState::OFF);
 					// }
 					break;
 			}
@@ -550,7 +627,7 @@ namespace frontier_server
 
 	void FrontierServer::publishClusteredFrontier()
 	{
-		cout << "publishClusteredFrontier" << endl;
+		m_logfile << "publishClusteredFrontier" << endl;
 		// init markers for free space:
 		visualization_msgs::MarkerArray frontierNodesVis;
 		// each array stores all cubes of a different size, one for each depth level:
@@ -669,12 +746,13 @@ namespace frontier_server
 		m_goal.pose.position.x = goal.x();
 		m_goal.pose.position.y = goal.y();
 		m_goal.pose.position.z = goal.z();
-		m_goal.pose.orientation.x = 0;
-		m_goal.pose.orientation.y = 0;
-		m_goal.pose.orientation.z = 0;
-		m_goal.pose.orientation.w = 1;
+		m_goal.pose.orientation.x = -0.0015504304319620132;
+		m_goal.pose.orientation.y = 0.0010435852454975247;
+		m_goal.pose.orientation.z = -0.8939942717552185;
+		m_goal.pose.orientation.w = 0.44807448983192444;
 
 		m_uavGoalPub.publish(m_goal);
 		ROS_WARN_STREAM(goal.x() << " " << goal.y() << " " << goal.z() << " -> Goal published on exporation/goal!");
+		this->m_explorationToggled = false;
 	}
 }

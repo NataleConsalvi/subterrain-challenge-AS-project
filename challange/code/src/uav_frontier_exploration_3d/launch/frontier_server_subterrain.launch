@@ -1,5 +1,5 @@
 <launch>
-  <arg name="rate" default="1"/>
+  <arg name="rate" default="10"/>
   <arg name="namespace" default="$(env UAV_NAMESPACE)"/>
   <arg name="odometry" default="/current_state_est"/>
   <arg name="cloud_in" default="/perception/depth_camera/point_cloud_2"/>

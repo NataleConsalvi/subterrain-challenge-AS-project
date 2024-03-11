@@ -14,7 +14,7 @@ global_planner:
   # If planning for both path and trajectory, the global planner tries to plan
   # several times to ensure obstacle free trajectory.
   path_and_trajectory:
-    restarts: 5
+    restarts: 10
 
   path:
     # Sometimes RRT* path planning fails and succeeds on next attempt. This
@@ -84,7 +84,7 @@ path_planner:
     # Bounds are defined by
     # bounds: [[[-15, 9], [-4, 45], [0.0, 10.0], [-3.15, 3.15]]] 
     # bounds: [[[-22, 8], [-13, 29], [0.5, 4.0], [-3.15, 3.15]]]
-    bounds: [[[-500.0, -319.0], [-30.0, 30.0], [-30.0, 30.0], [-3.15, 3.15]]]
+    bounds: [[[-900.0, -319.0], [-30.0, 30.0], [-30.0, 30.0], [-3.15, 3.15]]]
 
   # RRT* parameter set
 
@@ -104,7 +104,7 @@ path_planner:
   # Maximum length of a motion added in the tree of motions.
   range:
     is_used: true
-    value: 3.0
+    value: 5.0
   # Rewiring scale factor
   rewire_factor:
     is_used: false
@@ -194,13 +194,13 @@ state_validity_checker:
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.
   ball:
-    radius: 0.1
-    resolution: 0.1
+    radius: 2.0
+    resolution: 0.5
 
   # Just one sphere
   sphere:
-    radius: 1.0
-    resolution: 0.3
+    radius: 2.0
+    resolution: 0.5
 
   # Circle can be useful for 2D exploration
   circle:
