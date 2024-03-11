@@ -14,10 +14,10 @@ exploration:
   # used for frontier detection
   bbx_minX: -1200.0
   bbx_maxX: -319.0
-  bbx_minY: -30.0
-  bbx_maxY: 30.0
-  bbx_minZ: -40.0
-  bbx_maxZ: 40.0
+  bbx_minY: -70.0
+  bbx_maxY: 70.0
+  bbx_minZ: -70.0
+  bbx_maxZ: 70.0
 
   # Length of one side of the cube inside which we calculate information gain
   box_length: 8.0

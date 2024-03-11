@@ -13,6 +13,8 @@ Visualization::Visualization()
     "visualization/waypoints", 1);
   state_points_publisher_ = nh_.advertise<visualization_msgs::Marker>(
     "visualization/state_points", 1);
+  ready_trajectory_pub = nh_.advertise<std_msgs::Bool>(
+    "ready_trajectory", 1);
 }
 
 void Visualization::setPath(Eigen::MatrixXd eigen_path, bool projection)
@@ -32,6 +34,7 @@ nav_msgs::Path Visualization::getPath()
 
 void Visualization::publishPath()
 {
+  ready_trajectory_pub.publish(True);
   path_publisher_.publish(path_);
 }
 

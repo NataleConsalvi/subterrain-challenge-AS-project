@@ -14,6 +14,7 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/ColorRGBA.h>
+#include <std_msgs/Bool.h>
 
 using namespace std;
 
@@ -99,7 +100,7 @@ class Visualization
     nav_msgs::Path path_, trajectory_;
     visualization_msgs::Marker waypoints_, state_points_;
     ros::Publisher path_publisher_, trajectory_publisher_, waypoints_publisher_, 
-      state_points_publisher_;
+      state_points_publisher_, ready_trajectory_pub;
 
     double state_scale_, waypoints_scale_;
 

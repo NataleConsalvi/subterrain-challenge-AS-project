@@ -149,7 +149,6 @@ class UavExplorationSm:
                     # If the plan was successful then execute it.
                     else:
                         self.trajectory_pub.publish(response.trajectory)
-                        self.trajectory_ready.publish(True)
                         self.state = "execute"
                 # if trajectory is not OK, point is reached and go to "start" state
                 else:
@@ -171,6 +170,7 @@ class UavExplorationSm:
                         print("Execution timeout factor triggered!")
                         print("**********************************************")
                         print(" ")
+                        self.trajectory_ready.publish(False)
                         self.state = "end"
                         break
                     # If we want to send another point anytime
