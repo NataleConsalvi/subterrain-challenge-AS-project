@@ -126,8 +126,9 @@ class LightDetector(object):
 
     # Defining camera info callback
     def camera_info_callback(self, msg):
-        rospy.loginfo('Camera Info received...')
-        self.K = np.array(msg.K).reshape(3, 3) # Intrinsic matrix from camera info message
+        if self.K is None:
+            rospy.loginfo('Camera Info received...')
+            self.K = np.array(msg.K).reshape(3, 3) # Intrinsic matrix from camera info message
     
     # Convert the image to a list of pixels and find unique colors
     def find_unique_colors(self, image):
@@ -140,27 +141,28 @@ class LightDetector(object):
     def sem_image_callback(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8") # Convert the image to a OpenCV image
-            self.sem_img = cv_image
-
-            #self.find_unique_colors(cv_image) # Used for finding unique colors in semantic image
-
-            self.process_image(cv_image) #  Process the image
-
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
+        
+        self.sem_img = cv_image
+
+        #self.find_unique_colors(cv_image) # Used for finding unique colors in semantic image
+
+        self.process_image(cv_image) #  Process the image
 
     # Defining rgb image callback  
     def rgb_image_callback(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8") # Convert the image to a OpenCV image
-            self.rgb_img = cv_image
-
-            # if self.sem_img is not None:
-            #     dst = cv2.addWeighted(cv_image, 0.7, self.sem_img, 0.3, 0.0)
-            #     self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(dst, "bgr8"))
-
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
+        
+        self.rgb_img = cv_image
+
+        # if self.sem_img is not None:
+        #     dst = cv2.addWeighted(cv_image, 0.7, self.sem_img, 0.3, 0.0)
+        #     self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(dst, "bgr8"))
+
 
     def process_image(self, image):
         # Processing the image
@@ -171,6 +173,15 @@ class LightDetector(object):
 
         mask = cv2.inRange(image, lower_bound, upper_bound) # Find pixels within the bounds and create a mask
         self.mask = mask
+
+        if np.sum(self.mask) == 0:
+            if self.publish_proc_sem_img:
+                try:
+                    ros_image = self.bridge.cv2_to_imgmsg(image, "bgr8")
+                    self.proc_sem_img_pub.publish(ros_image) # Publishing processed image
+                except CvBridgeError as e:
+                    rospy.logerr(f"CvBridge Error in Publishing: {e}")
+            return
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # Find contours from the binary image
         if self.publish_proc_sem_img:
@@ -194,6 +205,9 @@ class LightDetector(object):
             # cloud_transformed = do_transform_cloud(data.cloud, transform)
             pcl_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data) # Convert msg to numpy
 
+            if self.K is None or self.rgb_img is None or self.sem_img is None:
+                return
+        
             u, v = self.calculate_pixel_coordinates(pcl_array) # Calculate the pixel coords of the point cloud points
              # Draw circles around pixel coordinates.
              # This visualizes where points in the point cloud correspond to locations in the image.
@@ -204,7 +218,7 @@ class LightDetector(object):
                 self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
 
 
-            if self.mask is not None:
+            if self.mask is not None and np.sum(self)!=0:
   
                 u = np.array(u, dtype=int)
                 v = np.array(v, dtype=int)
@@ -230,7 +244,12 @@ class LightDetector(object):
                 pcl_header = data.header
                 # Transforms the filtered point cloud to a world coordinate frame
                 if self.pub_in_world_coords:
-                    transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
+                    try:
+                        transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
+                    except tf2_ros.LookupException as e:
+                        rospy.logerr(e)
+                        return
+
                     object_pcl_cloud = do_transform_cloud(object_pcl_msg, transform)
                     filtered_np_cloud = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(object_pcl_cloud)
                     pcl_header.frame_id = 'world'
@@ -253,8 +272,19 @@ class LightDetector(object):
                 if self.publish_object_vis_markers:
                     markers_array = self.create_marker_from_bb(bb_array)
                     self.object_marker_pub.publish(markers_array)
+            else:
+                bb_array = Detection3DArray()
+                pcl_header.frame_id = 'world'
+                bb_array.header = pcl_header
+                bb_array.detections = self.detected_lights
+                if self.publish_object_bb or self.publish_object_vis_markers:  
+                    self.object_bb_pub.publish(bb_array)
 
-        except tf2_ros.LookupException as e:
+                if self.publish_object_vis_markers:
+                    markers_array = self.create_marker_from_bb(bb_array)
+                    self.object_marker_pub.publish(markers_array)
+
+        except Exception as e:
             rospy.logerr(e)
 
 
