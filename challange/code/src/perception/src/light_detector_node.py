@@ -195,27 +195,36 @@ class LightDetector(object):
                 rospy.logerr(f"CvBridge Error in Publishing: {e}")
 
     
+    def create_overlayed_img(self, u, v, image):
+        # Draw circles around pixel coordinates.
+        # This visualizes where points in the point cloud correspond to locations in the image.
+        for u_, v_ in zip(u,v):
+            image = cv2.circle(self.rgb_img, (int(u_),int(v_)), radius=0, color=(0, 0, 255), thickness=-1)
+            self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
+
     # Defining point cloud callback 
     def point_cloud_callback(self, data):
         # rospy.loginfo('Point Cloud received...')
         try:
-            frame_id = data.header.frame_id # Gets frame id from data header
-            ## Assume the semantic image and left rgb image are in the same frame so no need for transformation
-            # transform = self.tf_buffer.lookup_transform('/Quadrotor/Sensors/RGBCameraLeft', frame_id, rospy.Time(), rospy.Duration(1.0))
-            # cloud_transformed = do_transform_cloud(data.cloud, transform)
-            pcl_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data) # Convert msg to numpy
 
-            if self.K is None or self.rgb_img is None or self.sem_img is None:
+            # Gets frame id from data header
+            frame_id = data.header.frame_id 
+
+            ## Assume the semantic image and left rgb image are in the same frame so no need for transformation
+            # transform = self.tf_buffer.lookup_transform('Quadrotor/Sensors/RGBCameraLeft', frame_id, rospy.Time(), rospy.Duration(1.0))
+            # cloud_transformed = do_transform_cloud(data.cloud, transform)
+
+            # Convert msg to numpy
+            pcl_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data) 
+
+            if self.K is None or self.sem_img is None:
                 return
         
-            u, v = self.calculate_pixel_coordinates(pcl_array) # Calculate the pixel coords of the point cloud points
-             # Draw circles around pixel coordinates.
-             # This visualizes where points in the point cloud correspond to locations in the image.
+            # Calculate the pixel coords of the point cloud points
+            u, v = self.calculate_pixel_coordinates(pcl_array) 
 
-            for u_, v_ in zip(u,v):
-                image = cv2.circle(self.rgb_img, (int(u_),int(v_)), radius=0, color=(0, 0, 255), thickness=-1)
-            if self.publish_overlayed_rgb_img:
-                self.overlayed_image_pub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
+            if self.rgb_img is not None and self.publish_overlayed_rgb_img:
+                self.create_overlayed_img(u, v, image)
 
             object_header = data.header
             bb_array = Detection3DArray()
@@ -229,11 +238,14 @@ class LightDetector(object):
                 res_mask = (self.mask[v,u] > 0) & (v > 0) & (u > 0) 
 
                 object_pcl_arr = pcl_array[res_mask]
+
                 if len(object_pcl_arr) > 0:
+
                     pcl_cloud = pcl.PointCloud(object_pcl_arr.astype(np.float32))
+                    
                     # Applying outlier removal method
                     filtered_pcl_cloud = self.do_statistical_outlier_filtering(pcl_cloud, 
-                        self.mean_k,self.thresh)                                            
+                        self.mean_k,self.thresh)                                                        
                     filtered_np_cloud = np.asarray(filtered_pcl_cloud)
 
                     # Convert pcl_array to a structured array with named fields
@@ -247,7 +259,7 @@ class LightDetector(object):
                     # Transforms the filtered point cloud to a world coordinate frame
                     if self.pub_in_world_coords:
                         try:
-                            transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(1.0))
+                            transform = self.tf_buffer.lookup_transform('world', data.header.frame_id, rospy.Time(), rospy.Duration(0.1))
                         except tf2_ros.LookupException as e:
                             rospy.logerr(e)
                             return
