@@ -197,7 +197,7 @@ class LightDetector(object):
     
     # Defining point cloud callback 
     def point_cloud_callback(self, data):
-        rospy.loginfo('Point Cloud received...')
+        # rospy.loginfo('Point Cloud received...')
         try:
             frame_id = data.header.frame_id # Gets frame id from data header
             ## Assume the semantic image and left rgb image are in the same frame so no need for transformation
@@ -299,12 +299,9 @@ class LightDetector(object):
             else:
                 far = True
                 for old_detection in self.detected_lights:
-                    if self.calculate_distance(new_detection.bbox, old_detection.bbox) < 1:
+                    dist = self.calculate_distance(new_detection.bbox, old_detection.bbox)
+                    if dist < 1:
                         far = False
-                        # n_bb_size = new_detection.bbox.size
-                        # o_bb_size = old_detection.bbox.size
-                        # if (n_bb_size.x * n_bb_size.y * n_bb_size.z) > (o_bb_size.x * o_bb_size.y * o_bb_size.z):
-                        #     old_detection.bbox = new_detection.bbox
                         break
                 if far:
                     self.detected_lights.append(new_detection)
@@ -367,6 +364,7 @@ class LightDetector(object):
     def create_marker_from_bb(self, detections_arr):
 
         markers_arr = MarkerArray()
+        m_id = 0
         for detection in detections_arr.detections:
             marker = Marker()
             marker.pose = detection.bbox.center
@@ -374,6 +372,10 @@ class LightDetector(object):
             marker.type = 1
             marker.header = detections_arr.header
             marker.color.a = 0.5
+            # marker.action = Marker.DELETEALL
+            marker.lifetime = rospy.Duration(0.2)
+            marker.id = m_id
+            m_id +=1
 
             markers_arr.markers.append(marker)
 
