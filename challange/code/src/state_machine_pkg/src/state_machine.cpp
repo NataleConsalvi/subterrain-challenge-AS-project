@@ -30,6 +30,7 @@ class State_Machine{
     ros::Publisher carrot_trajectory_pub;
 
     ros::Subscriber Ready_Trajectory;
+    ros::Subscriber Point_reached;
     
 
     // Mission States
@@ -86,10 +87,36 @@ public:
 
         detected_lights = nh_.subscribe("/perception_params/object_vis_out_topic", 10, &State_Machine::autonomous_finished, this);
         
-        Ready_Trajectory = nh_.subscribe("red/ready_trajectory",1, &State_Machine::TrajReadyCallBack, this);     
+        Ready_Trajectory = nh_.subscribe("red/ready_trajectory",1, &State_Machine::TrajReadyCallBack, this);
+
+        Point_reached = nh_.subscribe("red/exploration/point_reached",1, &State_Machine::PointReachedCallBack, this);  
         
     }
 
+    void PointReachedCallBack(const std_msgs::Bool& msg){
+
+        if (mission_state == 2 && msg.data) {
+            
+            std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
+            std::string source = "source devel/setup.bash";
+            
+
+            std::string command1 = "export UAV_NAMESPACE=red";
+            std::string command2 = "rosservice call /red/exploration/toggle \"data: true\"";
+
+            const char* homeDir = std::getenv("HOME");
+            if (homeDir == nullptr) {
+                std::cerr << "Error: Unable to determine the home directory." << std::endl;
+            }
+
+            // Combine commands to be executed in a new terminal with changed working directory
+            std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
+                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exit";
+            
+            
+            system(fullCommand.c_str());
+        }
+    }
 
 
     void TrajReadyCallBack(const std_msgs::Bool& msg){
@@ -110,7 +137,7 @@ public:
 
             // Combine commands to be executed in a new terminal with changed working directory
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'";
+                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'; exit";
             
             
             system(fullCommand.c_str());
@@ -119,7 +146,7 @@ public:
 
     void state_machine_loop(const ros::TimerEvent& t){
         if (!init) {
-            ros::Duration(20.0).sleep();  // Sleep for 20 seconds
+            ros::Duration(30.0).sleep();  // Sleep for 20 seconds
             init = true;
         }
         if(mission_state == 1){predefined_state();}
@@ -167,8 +194,8 @@ public:
 
             std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
             std::string source = "source devel/setup.bash";
-            std::string command1 = "export UAV_NAMESPACE=red";
-            std::string command2 = "roslaunch state_machine_pkg predefined2autonomous.launch";
+            std::string command11 = "export UAV_NAMESPACE=red";
+            std::string command22 = "roslaunch state_machine_pkg predefined2autonomous.launch";
 
             // Dynamically obtain the home directory of the user
             const char* homeDir = std::getenv("HOME");
@@ -178,10 +205,12 @@ public:
 
             // Combine commands to be executed in a new terminal with changed working directory
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'";
+                                    + intoworkspace + " && " + source + " && " + command11 + " && " + command22 + "; exec bash'";
             
             system(fullCommand.c_str());
             ROS_INFO("Opened new terminal");
+
+            ros::Duration(20.0).sleep();
 
             trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
             msg.transforms.resize(1);
@@ -205,20 +234,14 @@ public:
 
             carrot_trajectory_pub.publish(msg);
 
-            std::string command1 = "export UAV_NAMESPACE=red";
-            std::string command2 = "rosservice call /red/exploration/toggle \"data: true\"";
+            std::string command111 = "export UAV_NAMESPACE=red";
+            std::string command222 = "rosservice call /red/exploration/toggle \"data: true\"";
 
             // Combine commands to be executed in a new terminal with changed working directory
             std::string fullCommand2 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 +"; exec bash'";
+                                    + intoworkspace + " && " + source + " && " + command111 + " && " + command222 + "; exec bash' & disown; exit";
             
             system(fullCommand2.c_str());
-
-            std::string command3 = "rosrun controller_pkg PointReachedNode.cpp";
-            std::string fullCommand3 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command3 + "; exec bash'";
-            
-            system(fullCommand3.c_str());
         }
     }
 

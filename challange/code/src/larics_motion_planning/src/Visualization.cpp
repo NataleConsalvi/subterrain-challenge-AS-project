@@ -34,7 +34,10 @@ nav_msgs::Path Visualization::getPath()
 
 void Visualization::publishPath()
 {
-  ready_trajectory_pub.publish(True);
+  std_msgs::Bool msg;
+  msg.data = true;
+  ready_trajectory_pub.publish(msg);
+
   path_publisher_.publish(path_);
 }
 

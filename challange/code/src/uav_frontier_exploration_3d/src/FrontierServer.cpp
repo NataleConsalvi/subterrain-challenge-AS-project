@@ -549,7 +549,7 @@ namespace frontier_server
 					break;
 			}
 			ros::WallTime currentTime = ros::WallTime::now();
-			cout << "Frontier exploration used total :" << (currentTime - startTime).toSec() << " sec" << endl;
+			m_logfile << "Frontier exploration used total :" << (currentTime - startTime).toSec() << " sec" << endl;
 			loopRate.sleep();
 		}
 	}

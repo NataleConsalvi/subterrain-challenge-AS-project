@@ -1,5 +1,9 @@
 <launch>
     <!-- Launch the frontier_server from uav_frontier_exploration_3d package -->
+    <include file="$(find simulation)/launch/perception.launch" />
+
+    <node name="PointReachedNode" pkg="controller_pkg" type="PointReachedNode"/>
+
     <include file="$(find uav_frontier_exploration_3d)/launch/planner.launch" />
     
     <include file="$(find uav_frontier_exploration_3d)/launch/execute_trajectory.launch" />
@@ -7,6 +11,6 @@
     <include file="$(find uav_frontier_exploration_3d)/launch/frontier_server_subterrain.launch" />
 
     <!-- Launch the perception_pipeline node -->
-    <include file="$(find perception)/launch/perception_pipeline.launch" />
+    <!-- <include file="$(find perception)/launch/perception_pipeline.launch" /> -->
 </launch>
 

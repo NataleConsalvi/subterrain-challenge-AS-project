@@ -43,7 +43,7 @@ sensor_model:
   clamping_thres_max: 0.97
   
 octomap:
-  resolution: 1.3
+  resolution: 1.5
   octree_depth: 16
   # Filename and file path for saving octomap
   filename: "octomap_large.binvox.bt"
