@@ -110,10 +110,10 @@ public:
             }
 
             // Combine commands to be executed in a new terminal with changed working directory
+
+            
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exit";
-            
-            
+                                   + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash -c \"exit\"'";
             system(fullCommand.c_str());
         }
     }
@@ -136,10 +136,10 @@ public:
             }
 
             // Combine commands to be executed in a new terminal with changed working directory
+       
+            
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'; exit";
-            
-            
+                                  + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash -c \"exit\"'";
             system(fullCommand.c_str());
         }
     }
@@ -238,9 +238,9 @@ public:
             std::string command222 = "rosservice call /red/exploration/toggle \"data: true\"";
 
             // Combine commands to be executed in a new terminal with changed working directory
+       
             std::string fullCommand2 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command111 + " && " + command222 + "; exec bash' & disown; exit";
-            
+                                  + intoworkspace + " && " + source + " && " + command111 + " && " + command222 + "; exec bash -c \"exit\"'";
             system(fullCommand2.c_str());
         }
     }
