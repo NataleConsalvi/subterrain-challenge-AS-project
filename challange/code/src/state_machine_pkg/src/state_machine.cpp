@@ -240,7 +240,7 @@ public:
             // Combine commands to be executed in a new terminal with changed working directory
        
             std::string fullCommand2 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                  + intoworkspace + " && " + source + " && " + command111 + " && " + command222 + "; exec bash -c \"exit\"'";
+                                  + intoworkspace + " && " + source + " && " + command111 + " && " + command222 + "; exec bash'";
             system(fullCommand2.c_str());
         }
     }
