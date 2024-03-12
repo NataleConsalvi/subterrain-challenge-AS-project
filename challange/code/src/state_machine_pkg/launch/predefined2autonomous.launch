@@ -1,4 +1,6 @@
 <launch>
+
+
     <!-- Launch the frontier_server from uav_frontier_exploration_3d package -->
     <include file="$(find simulation)/launch/perception.launch" />
 
@@ -10,7 +12,6 @@
     
     <include file="$(find uav_frontier_exploration_3d)/launch/frontier_server_subterrain.launch" />
 
-    <!-- Launch the perception_pipeline node -->
-    <!-- <include file="$(find perception)/launch/perception_pipeline.launch" /> -->
+
 </launch>
 

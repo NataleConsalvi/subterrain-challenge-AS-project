@@ -146,7 +146,7 @@ public:
 
     void state_machine_loop(const ros::TimerEvent& t){
         if (!init) {
-            ros::Duration(30.0).sleep();  // Sleep for 20 seconds
+            ros::Duration(60.0).sleep();  // Sleep for 20 seconds
             init = true;
         }
         if(mission_state == 1){predefined_state();}
@@ -210,7 +210,7 @@ public:
             system(fullCommand.c_str());
             ROS_INFO("Opened new terminal");
 
-            ros::Duration(20.0).sleep();
+            ros::Duration(45.0).sleep();
 
             trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
             msg.transforms.resize(1);

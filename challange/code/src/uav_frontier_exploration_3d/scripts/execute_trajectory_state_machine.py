@@ -56,7 +56,7 @@ class UavExplorationSm:
 
         # Initialize services
         print("Waiting for service multi_dof_trajectory.")
-        rospy.wait_for_service('multi_dof_trajectory', timeout=30)
+        rospy.wait_for_service('multi_dof_trajectory', timeout=60)
         self.plan_trajectory_service = rospy.ServiceProxy("multi_dof_trajectory", MultiDofTrajectory)
 
         rospy.Service('confirm_trajectory', SetBool, self.confirm_trajectory)

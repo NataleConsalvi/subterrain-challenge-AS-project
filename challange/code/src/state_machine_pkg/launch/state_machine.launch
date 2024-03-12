@@ -1,4 +1,10 @@
 <launch>
         <node name="state_machine" pkg="state_machine_pkg" type="state_machine" output="screen"/>
         <include file="$(find simulation)/launch/simulation.launch"/>
+
+        <node type="rviz" name="rviz" pkg="rviz" args="-d $(find perception)/config/config.rviz" />
+        
+        <!-- Launch the perception_pipeline node -->
+    	<include file="$(find perception)/launch/perception_pipeline.launch" />
+    
 </launch>

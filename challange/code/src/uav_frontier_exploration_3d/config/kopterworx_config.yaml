@@ -189,17 +189,17 @@ toppra_trajectory:
 
 state_validity_checker:
   # State validity checker examples. Note that type can also be point.
-  type: "point"
+  type: "sphere"
 
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.
   ball:
-    radius: 4.0
+    radius: 3.0
     resolution: 0.5
 
   # Just one sphere
   sphere:
-    radius: 4.0
+    radius: 3.0
     resolution: 0.5
 
   # Circle can be useful for 2D exploration
