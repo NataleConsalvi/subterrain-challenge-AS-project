@@ -17,6 +17,7 @@
     <arg name="left_camera_info" value="/realsense/rgb/left/camera_info"/>  <!--left image camera info-->
     <arg name="left_image_rect" value="/realsense/rgb/left/image_rect"/> <!--rect left image-->
 
+    <arg name="queue_size" value="3" />
 
     <arg name="pointcloud_out" value="/perception/pcl/out_colored"/> <!-- pcl output topic-->
 
@@ -29,6 +30,7 @@
       <remap from="image_mono"  to="$(arg depth_image_raw)" />
       <remap from="camera_info"  to="$(arg depth_camera_info)"/>
       <remap from="image_rect"  to="$(arg depth_image_rect)"/>
+      <param  name="queue_size"  value="3"/>
     </node>
 
 
@@ -40,6 +42,7 @@
     <remap from="image_mono" to="$(arg left_image_raw)" />
     <remap from="camera_info"  to="$(arg left_camera_info)"/>
     <remap from="image_rect" to="$(arg left_image_rect)" />
+    <param  name="queue_size"  value="3"/>
   </node>  
 
 
@@ -53,6 +56,7 @@
 
       <remap from="depth_registered/camera_info" to="$(arg depth_registered_camera_info)"/>
       <remap from="depth_registered/image_rect" to="$(arg depth_registered_image_rect)"/> 
+      <param  name="queue_size"  value="3"/>
   </node>
 
 
@@ -62,6 +66,7 @@
     <remap from="rgb/image_rect_color" to="$(arg left_image_rect)"/>  
     <remap from="depth_registered/image_rect" to="$(arg depth_registered_image_rect)"/>  
     <remap from="depth_registered/points" to="$(arg pointcloud_out)"/>
+    <param  name="queue_size"  value="3"/>
   </node>
 
   
