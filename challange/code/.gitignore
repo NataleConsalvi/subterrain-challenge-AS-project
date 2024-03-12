@@ -1,0 +1,9 @@
+devel/
+
+build/
+
+logs/
+
+.catkin_tools/
+ 
+src/simulation/Simulation_Data/

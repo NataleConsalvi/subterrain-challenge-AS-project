@@ -1,0 +1,68 @@
+
+
+<launch>
+
+
+  <arg name="respawn" default="true" />
+
+
+    <arg name="depth_image_raw" value="/realsense/depth/image"/>  <!--raw depth image-->
+    <arg name="depth_camera_info" value="/realsense/depth/camera_info"/>  <!--depth image camera info-->
+    <arg name="depth_image_rect" value="/realsense/depth/image_rect"/> <!--rect depth image-->
+
+    <arg name="depth_registered_camera_info" value="/perception/depth_reg/camera_info"/>  <!--depth image camera info-->
+    <arg name="depth_registered_image_rect" value="/perception/depth_reg/image_rect"/> <!--rect depth image-->
+
+    <arg name="left_image_raw" value="/realsense/rgb/left/image_raw"/>  <!--raw left image-->
+    <arg name="left_camera_info" value="/realsense/rgb/left/camera_info"/>  <!--left image camera info-->
+    <arg name="left_image_rect" value="/realsense/rgb/left/image_rect"/> <!--rect left image-->
+
+
+    <arg name="pointcloud_out" value="/perception/pcl/out_colored"/> <!-- pcl output topic-->
+
+
+    <node pkg="nodelet" type="nodelet" name="standalone_nodelet" args="manager" output="screen"/>
+
+    <!-- first rectify the depth image -->
+    <node pkg="nodelet" type="nodelet" name="rectify_depth"
+          args="load image_proc/rectify  standalone_nodelet --no-bond" respawn="$(arg respawn)">
+      <remap from="image_mono"  to="$(arg depth_image_raw)" />
+      <remap from="camera_info"  to="$(arg depth_camera_info)"/>
+      <remap from="image_rect"  to="$(arg depth_image_rect)"/>
+    </node>
+
+
+  <!-- <remap from="/realsense/rgb/left_image_info" to="/realsense/rgb/left_camera_info"/> -->
+
+    <!--rectify the color image -->
+  <node pkg="nodelet" type="nodelet" name="rectify_color"
+        args="load image_proc/rectify standalone_nodelet --no-bond" respawn="$(arg respawn)">
+    <remap from="image_mono" to="$(arg left_image_raw)" />
+    <remap from="camera_info"  to="$(arg left_camera_info)"/>
+    <remap from="image_rect" to="$(arg left_image_rect)" />
+  </node>  
+
+
+  <!-- register left camera and depth camera -->
+  <node pkg="nodelet" type="nodelet" name="rgb_depth_registeration"
+  args="load depth_image_proc/register standalone_nodelet --no-bond" respawn="$(arg respawn)">
+
+      <remap from="rgb/camera_info" to="$(arg left_camera_info)"/> 
+      <remap from="depth/camera_info" to="$(arg depth_camera_info)"/> 
+      <remap from="depth/image_rect" to="$(arg depth_image_rect)"/>
+
+      <remap from="depth_registered/camera_info" to="$(arg depth_registered_camera_info)"/>
+      <remap from="depth_registered/image_rect" to="$(arg depth_registered_image_rect)"/> 
+  </node>
+
+
+  <!-- Construct point cloud of the rgb and depth topics -->
+  <node pkg="nodelet" type="nodelet" name="points_xyzrgb" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond" respawn="$(arg respawn)">
+    <remap from="rgb/camera_info" to="$(arg left_camera_info)" />  
+    <remap from="rgb/image_rect_color" to="$(arg left_image_rect)"/>  
+    <remap from="depth_registered/image_rect" to="$(arg depth_registered_image_rect)"/>  
+    <remap from="depth_registered/points" to="$(arg pointcloud_out)"/>
+  </node>
+
+  
+</launch>

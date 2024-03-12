@@ -63,7 +63,7 @@ class controllerNode{
   //
   // ~~~~ begin solution
 
-  ros::Subscriber desired_state, current_state, desired_state_2;
+  ros::Subscriber desired_state1, desired_state2, current_state;
   ros::Publisher prop_speeds;
   ros::Timer timer;
 
@@ -130,9 +130,8 @@ public:
       //  - read the lab 3 handout to fnd the message type
       //
       // ~~~~ begin solution
-      
-      desired_state = nh.subscribe("red/position_hold/trajectory", 100, &controllerNode::onDesiredState, this);
-      desired_state_2 = nh.subscribe("red/rotation360", 1, &controllerNode::onDesiredState, this);
+      desired_state1 = nh.subscribe("red/rotation360", 1, &controllerNode::onDesiredState, this);
+      desired_state2 = nh.subscribe("red/position_hold/trajectory", 1, &controllerNode::onDesiredState, this);
       current_state = nh.subscribe("current_state_est", 1, &controllerNode::onCurrentState, this);
       prop_speeds = nh.advertise<mav_msgs::Actuators>("rotor_speed_cmds", 1);
       timer = nh.createTimer(ros::Rate(hz), &controllerNode::controlLoop, this);
