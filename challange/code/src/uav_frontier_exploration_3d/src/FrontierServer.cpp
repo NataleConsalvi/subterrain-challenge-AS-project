@@ -406,7 +406,7 @@ namespace frontier_server
     	geometry_msgs::Twist acceleration;
 		trajectory_msgs::MultiDOFJointTrajectoryPoint multijointmsg;
 
-		const int num_steps = 20;  // You can adjust this number as needed
+		const int num_steps = 40;  // You can adjust this number as needed
     	const double rotation_rate = 1;  // Adjust the rotation rate as needed
 
     	multijointmsg.transforms.resize(1);
@@ -448,14 +448,14 @@ namespace frontier_server
 			rotation_360_pub.publish(multijointmsg);
 			
 			// Attendi per una breve durata per controllare il rate di rotazione
-        	usleep(1000000 / m_rate);
+        	usleep(200000 / m_rate);
 
 			m_octomapServer.runDefault();
 			m_octomapServer.publishVolume();
 			this->m_octree = m_octomapServer.getOcTree();	
 			// Get changed cells
 			this->m_changedCells = m_octomapServer.getChangedCells();
-			usleep(300000 / m_rate);
+			usleep(200000 / m_rate);
 		}
 		cout << "---Finish rotation z---" << endl;
 

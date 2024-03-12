@@ -179,7 +179,7 @@ path_planner:
 
 toppra_trajectory:
   # Maximum velocities for [x, y, z, yaw]
-  velocities: [2, 2, 1.2, 1]
+  velocities: [3, 3, 3, 1]
   # Maximum accelerations for [x, y, z, yaw]
   accelerations: [1.2, 1.2, 0.5, 0.8]
   # If using SO states angular must be set to 1
@@ -189,7 +189,7 @@ toppra_trajectory:
 
 state_validity_checker:
   # State validity checker examples. Note that type can also be point.
-  type: "prism"
+  type: "point"
 
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.
