@@ -189,18 +189,18 @@ toppra_trajectory:
 
 state_validity_checker:
   # State validity checker examples. Note that type can also be point.
-  type: "sphere"
+  type: "prism"
 
   # If ball is selected a set of concentric spheres will be generated for
   # state validity checking.
   ball:
     radius: 3.0
-    resolution: 0.5
+    resolution: 1.5
 
   # Just one sphere
   sphere:
     radius: 3.0
-    resolution: 0.5
+    resolution: 1.5
 
   # Circle can be useful for 2D exploration
   circle:
@@ -225,7 +225,7 @@ state_validity_checker:
     # y_dimension: 2.0
     # z_dimension: 1.0
     # resolution: 0.25
-    x_dimension: 1.25
-    y_dimension: 1.25
-    z_dimension: 1.0
-    resolution: 0.25
+    x_dimension: 1.5
+    y_dimension: 1.5
+    z_dimension: 1.5
+    resolution: 1.5

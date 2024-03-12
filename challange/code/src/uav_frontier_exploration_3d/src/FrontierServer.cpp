@@ -448,7 +448,7 @@ namespace frontier_server
 			rotation_360_pub.publish(multijointmsg);
 			
 			// Attendi per una breve durata per controllare il rate di rotazione
-        	usleep(100000 / m_rate);
+        	usleep(1000000 / m_rate);
 
 			m_octomapServer.runDefault();
 			m_octomapServer.publishVolume();
