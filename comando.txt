@@ -1,0 +1,66 @@
+rostopic pub /red/carrot/trajectory trajectory_msgs/MultiDOFJointTrajectoryPoint "transforms:
+- translation:
+      x: -320.983182101615
+      y: 9.996668873146382
+      z: 14.978115666412771
+  rotation:
+      x: 0.0017930719768628478
+      y: -0.00036625718348659575
+      z: 0.8939921259880066
+      w: -0.4480791985988617
+velocities:
+- linear:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  angular:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+accelerations:
+- linear:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  angular:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+time_from_start:
+  secs: 0
+  nsecs: 0" 
+
+
+rostopic pub /red/carrot/trajectory trajectory_msgs/MultiDOFJointTrajectoryPoint "transforms:
+- translation:
+    x: -38.050599775535126
+    y: 9.992991455956233
+    z: 6.56882331240295
+  rotation:
+    x: 0.03794878348708153
+    y: -0.004745252896100283
+    z: -0.9979719519615173
+    w: -0.05088721588253975
+velocities:
+- linear:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  angular:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+accelerations:
+- linear:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  angular:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+time_from_start:
+  secs: 0
+  nsecs: 0" 
+
+

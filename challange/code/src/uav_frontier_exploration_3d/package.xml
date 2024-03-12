@@ -47,5 +47,4 @@
   <run_depend>libpcl-all</run_depend>
   <run_depend>mean_shift_clustering</run_depend>
 
-
 </package>

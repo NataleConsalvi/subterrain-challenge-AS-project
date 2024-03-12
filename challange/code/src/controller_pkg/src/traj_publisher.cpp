@@ -41,7 +41,7 @@ public:
     TrajPublisher()
     {
         ROS_INFO("TRAJ_PUBLISHER INITIALIZED.");
-        desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("airsim_ros_node/desired_state2", 1);
+        desired_state_pub = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("red/position_hold/trajectory", 1);
         
         int count = 0;
         ros::Time start(ros::Time::now());

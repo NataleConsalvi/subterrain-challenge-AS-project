@@ -26,6 +26,12 @@ class State_Machine{
     //Timer controll the main node
     ros::Timer timermission;
 
+    
+    ros::Publisher carrot_trajectory_pub;
+
+    ros::Subscriber Ready_Trajectory;
+    
+
     // Mission States
     // 1- Predefined route to cave (TakeOff and Predefined route to cave entrance)
     // 2- Autonomous exploration of the cave
@@ -69,15 +75,46 @@ public:
         success = false;
         // publish to controller
         drone_state_pub = nh_.advertise<std_msgs::Int64>("state", 10);
+
+        carrot_trajectory_pub = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("red/carrot/trajectory", 1);
         
         // use timer to schedule events
         timermission = nh_.createTimer(ros::Duration(0.1), &State_Machine::state_machine_loop, this);
 
         // Subscribe to the desired state topic
-        desired_state_subscriber = nh_.subscribe("/airsim_ros_node/desired_state2", 1, &State_Machine::desired_state_callback, this);
+        desired_state_subscriber = nh_.subscribe("red/position_hold/trajectory", 1, &State_Machine::desired_state_callback, this);
 
         detected_lights = nh_.subscribe("/perception_params/object_vis_out_topic", 10, &State_Machine::autonomous_finished, this);
         
+        Ready_Trajectory = nh_.subscribe("red/ready_trajectory",1, &State_Machine::TrajReadyCallBack, this);     
+        
+    }
+
+
+
+    void TrajReadyCallBack(const std_msgs::Bool& msg){
+
+        if (mission_state == 2 && msg.data) {
+            
+            std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
+            std::string source = "source devel/setup.bash";
+            
+
+            std::string command1 = "export UAV_NAMESPACE=red";
+            std::string command2 = "rosservice call /red/confirm_trajectory \"data: true\"";
+
+            const char* homeDir = std::getenv("HOME");
+            if (homeDir == nullptr) {
+                std::cerr << "Error: Unable to determine the home directory." << std::endl;
+            }
+
+            // Combine commands to be executed in a new terminal with changed working directory
+            std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
+                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'";
+            
+            
+            system(fullCommand.c_str());
+        }
     }
 
     void state_machine_loop(const ros::TimerEvent& t){
@@ -130,7 +167,8 @@ public:
 
             std::string intoworkspace = "cd subterrain-challenge-AS-project/challange/code/";
             std::string source = "source devel/setup.bash";
-            std::string command = "roslaunch state_machine_pkg predefined2autonomous.launch";
+            std::string command1 = "export UAV_NAMESPACE=red";
+            std::string command2 = "roslaunch state_machine_pkg predefined2autonomous.launch";
 
             // Dynamically obtain the home directory of the user
             const char* homeDir = std::getenv("HOME");
@@ -140,10 +178,47 @@ public:
 
             // Combine commands to be executed in a new terminal with changed working directory
             std::string fullCommand = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
-                                    + intoworkspace + " && " + source + " && " + command + "; exec bash'";
+                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 + "; exec bash'";
             
             system(fullCommand.c_str());
             ROS_INFO("Opened new terminal");
+
+            trajectory_msgs::MultiDOFJointTrajectoryPoint msg;
+            msg.transforms.resize(1);
+            msg.transforms[0].translation.x = -320.983182101615;
+            msg.transforms[0].translation.y = 9.996668873146382;
+            msg.transforms[0].translation.z = 14.978115666412771;
+            msg.transforms[0].rotation.x = 0.0017930719768628478;
+            msg.transforms[0].rotation.y = -0.00036625718348659575;
+            msg.transforms[0].rotation.z = 0.8939921259880066;
+            msg.transforms[0].rotation.w = -0.4480791985988617;
+                
+            msg.velocities.resize(1);
+            msg.velocities[0].linear.x = 0.0;
+            msg.velocities[0].linear.y = 0.0;
+            msg.velocities[0].linear.z = 0.0;
+
+            msg.accelerations.resize(1);
+            msg.accelerations[0].linear.x = 0.0;
+            msg.accelerations[0].linear.y = 0.0;
+            msg.accelerations[0].linear.z = 0.0;
+
+            carrot_trajectory_pub.publish(msg);
+
+            std::string command1 = "export UAV_NAMESPACE=red";
+            std::string command2 = "rosservice call /red/exploration/toggle \"data: true\"";
+
+            // Combine commands to be executed in a new terminal with changed working directory
+            std::string fullCommand2 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
+                                    + intoworkspace + " && " + source + " && " + command1 + " && " + command2 +"; exec bash'";
+            
+            system(fullCommand2.c_str());
+
+            std::string command3 = "rosrun controller_pkg PointReachedNode.cpp";
+            std::string fullCommand3 = "gnome-terminal --working-directory=" + std::string(homeDir) + " -- bash -c '"
+                                    + intoworkspace + " && " + source + " && " + command3 + "; exec bash'";
+            
+            system(fullCommand3.c_str());
         }
     }
 
@@ -151,11 +226,10 @@ public:
     {
         mission_state_msgs.data = 2;
         drone_state_pub.publish(mission_state_msgs);
-
         if (landing_check)
         {
             mission_state = 3;
-            
+
             const char* roslaunchProcessName = "roslaunch state_machine_pkg predefined2autonomous.launch";
 
             // Construct the command to find and kill the roslaunch process

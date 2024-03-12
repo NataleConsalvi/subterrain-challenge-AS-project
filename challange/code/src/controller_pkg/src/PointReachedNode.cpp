@@ -1,63 +1,98 @@
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
-#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
-#include <std_msgs/Bool.h>
-#include <cmath>
-#include <geometry_msgs/Vector3.h>
-#include <Eigen/Dense>
-#include <iostream>
+#include "ros/ros.h"
+#include "geometry_msgs/Transform.h"
+#include "geometry_msgs/TransformStamped.h"
+#include "geometry_msgs/Twist.h"
+#include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
+#include "nav_msgs/Odometry.h"
+#include "std_msgs/Bool.h"
 
-class WaypointCheckerNode {
+class CarrotTrajectoryPublisher
+{
 public:
-    WaypointCheckerNode() {
-        desirePositionSub = nh.subscribe("airsim_ros_node/desired_state2", 1, &WaypointCheckerNode::desirePositionCallback, this);
-        currentStateSub = nh.subscribe("current_state_est", 1, &WaypointCheckerNode::currentStateCallback, this);
-        pointReachedPub = nh.advertise<std_msgs::Bool>("/airsim_ros_node/exploration/point_reached", 1);
+  CarrotTrajectoryPublisher()
+  {
+    // Initialize the ROS node handle
+    
+
+    // Subscribe to the exploration/point_reached topic
+    point_reached_sub_ = nh_.subscribe("red/exploration/point_reached", 1,
+                                       &CarrotTrajectoryPublisher::pointReachedCallback, this);
+
+    // Publish on the /red/carrot/trajectory topic
+    carrot_trajectory_pub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("red/carrot/trajectory", 1);
+    
+    // Subscribe to the current_state_est topic
+    current_state_est_sub_ = nh_.subscribe("current_state_est", 1,
+                                          &CarrotTrajectoryPublisher::currentStateEstCallback, this);
+  }
+
+   void currentStateEstCallback(const nav_msgs::Odometry& msg)
+  {
+    // Store the current_state_est message for later use
+    ROS_INFO("current_state_est received.");
+    current_state_est_ = msg;
+    
+  }
+
+  void pointReachedCallback(const std_msgs::Bool& msg)
+  {
+    if (msg.data)
+    {
+      // Flag is true, publish a carrot/trajectory message
+      ROS_INFO("Point reached! Publishing carrot/trajectory message...");
+
+      // Create a new carrot/trajectory message
+      trajectory_msgs::MultiDOFJointTrajectoryPoint carrot_trajectory_msg;
+
+      // Fill in the position and orientation data from current_state_est
+      geometry_msgs::Transform transform;
+      transform.translation.x = current_state_est_.pose.pose.position.x;  // Set translation x
+      transform.translation.y = current_state_est_.pose.pose.position.y; // Set translation y
+      transform.translation.z = current_state_est_.pose.pose.position.z;   // Set translation z
+      transform.rotation.x = current_state_est_.pose.pose.orientation.x;      // Set rotation x
+      transform.rotation.y = current_state_est_.pose.pose.orientation.y;      // Set rotation y
+      transform.rotation.z = current_state_est_.pose.pose.orientation.z;   // Set rotation z
+      transform.rotation.w = current_state_est_.pose.pose.orientation.w;    // Set rotation w
+
+      // Add the transform to the trajectory message
+      carrot_trajectory_msg.transforms.push_back(transform);
+
+      // Publish the carrot/trajectory message
+      carrot_trajectory_pub_.publish(carrot_trajectory_msg);
+      ROS_INFO("Carrot/trajectory message published:");
+    ROS_INFO_STREAM("Translation: x=" << transform.translation.x << ", y=" << transform.translation.y << ", z=" << transform.translation.z);
+    ROS_INFO_STREAM("Rotation: x=" << transform.rotation.x << ", y=" << transform.rotation.y << ", z=" << transform.rotation.z << ", w=" << transform.rotation.w);
     }
-
-    void desirePositionCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoint& des_state) {
-        // Store the desired position
-        geometry_msgs::Vector3 t = des_state.transforms[0].translation;
-        xd << t.x, t.y, t.z;
-         ROS_INFO("Received Desired Position (xd): [%.3f, %.3f, %.3f]", xd(0), xd(1), xd(2));
+    else {
+      ROS_INFO("Point not reached.");
     }
+  }
 
-    void currentStateCallback(const nav_msgs::Odometry& cur_state) {
-        // Calculate the distance between the current position and the desired position
-        Eigen::Vector3d x;
-        x << cur_state.pose.pose.position.x, cur_state.pose.pose.position.y, cur_state.pose.pose.position.z;
-         Eigen::Vector3d diff= x-xd;
-        double distance = diff.norm();
-         ROS_INFO("Current Position (x): [%.3f, %.3f, %.3f]", x(0), x(1), x(2));
-ROS_INFO("Desired Position (xd): [%.3f, %.3f, %.3f]", xd(0), xd(1), xd(2));
-
-
-ROS_INFO("Distance to desired position: %f", distance);
-        // Check if the distance is within the threshold
-        bool pointReached = (distance <= thresholdDistance);
-         ROS_INFO("Point reached: %s", pointReached ? "true" : "false");
-
-        // Publish the result
-        std_msgs::Bool reachedMsg;
-        reachedMsg.data = pointReached;
-        pointReachedPub.publish(reachedMsg);
-    }
+ 
 
 private:
-    ros::NodeHandle nh;
-    ros::Subscriber desirePositionSub;
-    ros::Subscriber currentStateSub;
-    ros::Publisher pointReachedPub;
-    Eigen::Vector3d xd;
-    double thresholdDistance = 5; // Set your desired threshold here
+  ros::NodeHandle nh_;
+  ros::Subscriber point_reached_sub_;
+  ros::Publisher carrot_trajectory_pub_;
+  ros::Subscriber current_state_est_sub_;
+  nav_msgs::Odometry current_state_est_;
 };
 
-int main(int argc, char** argv) {
-    ros::init(argc, argv, "waypoint_checker_node");
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "carrot_trajectory_publisher");
+  ROS_INFO("Node initialized.");
 
-    WaypointCheckerNode node;
+  CarrotTrajectoryPublisher carrot_publisher;
+  ROS_INFO("CarrotTrajectoryPublisher initialized.");
 
-    ros::spin();
+  ros::Rate loop_rate(0.5);  
 
-    return 0;
+  while (ros::ok())
+  {
+    ros::spinOnce();  
+    loop_rate.sleep();  
+  }
+
+  return 0;
 }

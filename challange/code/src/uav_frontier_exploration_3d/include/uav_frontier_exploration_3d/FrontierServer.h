@@ -5,9 +5,12 @@
 #include <uav_frontier_exploration_3d/BestFrontier.h>
 //Mean shift clustering
 #include <uav_frontier_exploration_3d/ClusteringAlgorithm.h>
-
 #include <std_srvs/SetBool.h>
 #include <std_msgs/Int32.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
+#include <geometry_msgs/Twist.h>
+#include <cmath>
+#include <geometry_msgs/Quaternion.h>
 
 namespace frontier_server
 {
@@ -40,6 +43,8 @@ namespace frontier_server
       virtual ~FrontierServer();
 
       bool configureFromFile(string config_filename);
+      double quaternion2Yaw(const geometry_msgs::Quaternion& quaternion);
+      void rotation360(geometry_msgs::Pose msg);
       void setStateAndPublish(ExplorationState state);
       void run();
 
@@ -61,7 +66,6 @@ namespace frontier_server
       void publishParentFrontier();
       void publishClusteredFrontier();
       void publishBestFrontier();
-       void publishBestFrontierMio();
       void publishUAVGoal(point3d goal);
       bool toggleExplorationServiceCb(std_srvs::SetBool::Request& request, 
 			  std_srvs::SetBool::Response& response)
@@ -79,7 +83,7 @@ namespace frontier_server
       ros::NodeHandle m_nh;
       ros::Publisher m_markerFrontierPub, m_markerClusteredFrontierPub,
         m_bestFrontierPub, m_markerCandidatesPub,m_frontierMapPub, m_uavGoalPub,
-        m_pubEsmState, m_trajectoryPointPub;
+        m_pubEsmState, rotation_360_pub;
       ros::Subscriber m_pointReachedSub, m_currentReferenceSub;
 
       octomap::OcTree* m_octree {NULL};
