@@ -32,7 +32,21 @@ Ensure that you have the necessary dependencies installed before building the pr
 
 ## Running Instructions
 This project has been implemented for UBUNTU 20.04.6 and ROS Noetic.
+After installing the dependencies, you can proceed with building the project and launching the state machine:
 
+`catkin build`
+
+After running `catkin build` and before starting the ROS package, it's important to add the folder and the two files containing the Unity simulation provided by the professor into the `devel/lib/simulation` directory. Additionally, you need to enable the execution of these files. Here's how:
+
+1. Copy the folder and the two files containing the Unity simulation into the `devel/lib/simulation` directory. If this directory does not exist, create it.
+
+2. After copying the files, ensure they are executable.
+
+Then:
+
+`source devel/setup.bash`
+
+`roslaunch state_machine_pkg state_machine.launch`
 
 ## Contacts
 For any questions or issues, feel free to contact Team 11 members.
