@@ -30,9 +30,7 @@ To install the dependencies, use the `requirements.txt` file located in the `cod
 
 It's important to install the following packages before running the project:
 
-`sudo apt install python3-pcl ros-noetic-tf2-sensor-msgs ros-noetic-vision-msgs ros-noetic-ros-numpy
- sudo apt-get install ros-noetic-geographic-msgs ros-noetic-octomap-msgs ros-noetic-ompl
- ros-noetic-octomap-ros`
+`sudo apt install python3-pcl ros-noetic-tf2-sensor-msgs ros-noetic-vision-msgs ros-noetic-ros-numpy ros-noetic-geographic-msgs ros-noetic-octomap-msgs ros-noetic-ompl ros-noetic-octomap-ros`
 
 Ensure that you have the necessary dependencies installed before building the project with catkin build. The source code required for building the project is located in the src folder.
 
